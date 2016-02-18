@@ -11,10 +11,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="EdgePicker.h" />
+    <ClInclude Include="ImageHelper.h" />
     <ClInclude Include="Utility.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="EdgePicker.cpp" />
     <ClCompile Include="Entrance.cpp" />
+    <ClCompile Include="ImageHelper.cpp" />
     <ClCompile Include="Utility.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -48,6 +52,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>E:\Software\Plugin\Opencv\build\include;E:\Software\Plugin\Opencv\build\include\opencv;E:\Software\Plugin\Opencv\build\include\opencv2;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\Software\Plugin\Opencv\build\x86\vc12\staticlib;E:\Software\Plugin\Opencv\build\x86\vc12\lib;E:\Software\Plugin\Opencv\build\x64\vc12\staticlib;E:\Software\Plugin\Opencv\build\x64\vc12\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -64,6 +70,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>opencv_world300.lib;opencv_ts300.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

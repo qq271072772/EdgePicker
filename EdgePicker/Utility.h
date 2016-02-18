@@ -15,8 +15,13 @@ class Math{
 
 public:
 
+	static double Abs(double x){
+		if (x < 0)
+			return -x;
+		return x;
+	}
 	static bool Equal(double x,double y){
-		return abs(x-y)<1e-20;
+		return Abs(x-y)<1e-20;
 	}
 
 };
@@ -229,6 +234,12 @@ public:
 	Dictionary(){};
 	~Dictionary(){};
 
+	void Set(Key key, Value value){
+		if (!ContainsKey(key))
+			Add(key, value);
+		else
+			Get(key)£½value;
+	}
 	void Add(Key key, Value value){
 		insert(pair<Key, Value>(key, value));
 	}
