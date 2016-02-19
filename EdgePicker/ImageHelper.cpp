@@ -19,7 +19,7 @@ namespace EP{
 	void ImageHelper::SetElem(IplImage* src, int x, int y, uchar value){
 		if (src == NULL)
 			return;
-		CV_IMAGE_ELEM(src, uchar, x, y) = value;
+		CV_IMAGE_ELEM(src, uchar, y, x) = value;
 	}
 	void ImageHelper::ReleaseImage(IplImage** src){
 		if (src != NULL)

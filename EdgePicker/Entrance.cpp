@@ -4,9 +4,8 @@ using namespace EP;
 
 int main(int argCnt,char** args){
 	EdgePicker* edgePicker = EdgePicker::Instance();
-	edgePicker->LoadSrcImage("E:\\Project\\EdgePicker\\Debug\\Image1.jpg");
-	edgePicker->InitHistogram();
-	edgePicker->DealBottom();
+	edgePicker->LoadSrcImage("E:\\Project\\EdgePicker\\Assets\\Image2.jpg");
+	edgePicker->LoadEdges("E:\\Project\\EdgePicker\\Assets\\Image2.txt");
 	edgePicker->Destroy();
 
 	//IplImage* test = cvLoadImage(args[1],CV_LOAD_IMAGE_UNCHANGED);

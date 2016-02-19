@@ -10,72 +10,61 @@ namespace EP{
 	void EdgePicker::LoadSrcImage(char* filename){
 		m_src = ImageHelper::LoadImage(filename);
 	}
-	void EdgePicker::InitHistogram(){
-		if (!EnsureSrc())
+	void EdgePicker::LoadEdges(char* filename){
+		char buffer[256];
+		const char* split = "	";
+		std::ifstream file(filename);
+		if (!file.is_open()){
+			cout << "File:" << filename << " not opened!" << endl;
 			return;
-		m_pixelCnt = 0;
-		m_histogram.Clear();
-		m_gray = ImageHelper::Rgb2Gray(m_src);
-		for (int i = 0; i < m_gray->height; i++)
-			for (int j = 0; j < m_gray->width; j++){
-				uchar bright = ImageHelper::SampleElem(m_gray, i, j);
-				if (!m_histogram.ContainsKey(bright))
-					m_histogram.Add(bright, 0);
-				m_histogram[bright]++;
-				m_pixelCnt++;
+		}
+
+		//Read edges
+		int edgeIndex = -1;
+		while (!file.eof()){
+			file.getline(buffer, 100);
+			char* token1,*token2, *nextToken;
+			token1 = strtok_s(buffer, split, &nextToken);
+			token2 = strtok_s(NULL, split, &nextToken);
+			if (token1 == NULL){
+				edges.Add(List<Vector2>());
+				edgeIndex++;
 			}
-	}
-	void EdgePicker::DealBottom(){
-		if (!EnsureSrc())
-			return;
-		
-		//Find peak and average pixel cnt;
-		int averagePixelCnt = m_pixelCnt / GRAY_PIXEL;
-		int peakCnt = 0, peakBright = -1;
-		List<int> brights = m_histogram.Keys();
-		for (int i = 0; i < brights.Count(); i++){
-			if (m_histogram[brights[i]]>peakCnt){
-				peakCnt = m_histogram[brights[i]];
-				peakBright = brights[i];
+			if (token1 != NULL && token2 != NULL){
+				if (Tools::IsDigit(token1[0]) && Tools::IsDigit(token2[0])){
+					Vector2 p(atoi((const char*)token1), atoi((const char*)token2));
+					edges[edgeIndex].Add(p);
+				}
 			}
 		}
 
-		//Find brights around peak
-		List<int> botBrights;
-		for (int i = 0; i < brights.Count(); i++){
-			if (m_histogram[brights[i]]>averagePixelCnt && Math::Abs(brights[i] - peakBright) < PEAK_RANGE)
-				botBrights.Add(brights[i]);
+		//Clear edges that have no points
+		for (int i = edges.Count() - 1; i >= 0; i--){
+			if (edges[i].Count() == 0)
+				edges.RemoveAt(i);
+			else
+				break;
 		}
 
-
-		//Mark the bottom part of gray image
-		CvSize size;
-		size.width = m_gray->width;
-		size.height = m_gray->height;
-		IplImage* dst = cvCreateImage(size, IPL_DEPTH_8U, 1);
-		cvCopy(m_gray, dst);
-		for (int i = 0; i < dst->height; i++)
-			for (int j = 0; j < dst->width; j++){
-				uchar bright = ImageHelper::SampleElem(dst, i, j);
-				if (botBrights.Contains(bright))
-					ImageHelper::SetElem(dst, i, j, 255);
-			}
-
-		//Show Image
-		double scale = 0.5f;
-		size.width = m_gray->width*scale;
-		size.height = m_gray->height*scale;
-		IplImage* grayImg = cvCreateImage(size, IPL_DEPTH_8U, 1);
-		IplImage* dstImg = cvCreateImage(size, IPL_DEPTH_8U, 1);
-		cvResize(m_gray, grayImg, CV_INTER_LINEAR);
-		cvResize(dst, dstImg, CV_INTER_LINEAR);
-		cvShowImage("Gray", grayImg);
-		cvShowImage("Dst", dstImg);
+		IplImage* test = cvCreateImage(CvSize(m_src->width, m_src->height), IPL_DEPTH_8U, 1);
+		cvZero(test);
+		cv::Mat testMat = cv::cvarrToMat(test);
+		for (int i = 0; i < edges.Count(); i++){
+		//	if (edges[i].Count()>100)
+				for (int j = 1; j < edges[i].Count(); j++){
+					cvLine(test, cvPoint(edges[i][j - 1].X(), edges[i][j - 1].Y()), cvPoint(edges[i][j].X(), edges[i][j].Y()), CV_RGB(0, 0, 255));
+					//cvCircle(test, cvPoint(edges[i][j].X(), edges[i][j].Y()), 3, CV_RGB(0, 0, 255), 3);
+					//ImageHelper::SetElem(test, edges[i][j].X(), edges[i][j].Y(), 255);
+				}
+				cvLine(test, cvPoint(edges[i][edges[i].Count() - 1].X(), edges[i][edges[i].Count() - 1].Y()),
+					cvPoint(edges[i][0].X(), edges[i][0].Y()), CV_RGB(0, 0, 255));
+		}
+		IplImage* test2 = cvCreateImage(CvSize(m_src->width*0.5, m_src->height*0.5), IPL_DEPTH_8U, 1);
+		cvResize(test, test2,CV_INTER_LINEAR);
+		cvShowImage("test", test2);
 		cvWaitKey();
-		cvDestroyWindow("Gray");
-		cvDestroyWindow("Dst");
-		ImageHelper::ReleaseImage(&dst);
-		ImageHelper::ReleaseImage(&grayImg);
-		ImageHelper::ReleaseImage(&dstImg);
+		cvDestroyAllWindows();
+		cvReleaseImage(&test);
+		cvReleaseImage(&test2);
 	}
 }

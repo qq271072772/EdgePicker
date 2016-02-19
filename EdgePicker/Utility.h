@@ -11,6 +11,13 @@ using namespace std;
 
 namespace Utility{
 
+class Tools{
+public:
+	static bool IsDigit(char ch){
+		return ch >= 48 && ch <= 57;
+	}
+};
+//-----------------------------------------------------------
 class Math{
 
 public:
@@ -86,6 +93,39 @@ public:
 		if (line.Perpendicular())
 			return abs(line.X()-p.X());
 		return abs(line.K()*p.X() - p.Y() + line.B())/sqrt(1+line.K()*line.K());
+	}
+};
+//-----------------------------------------------------------
+class Box2D{
+private:
+	Vector2 _p1;
+	Vector2 _p2;
+public:
+	Box2D(Vector2 p1, Vector2 p2) :_p1(p1), _p2(p2){}
+
+	double Left(){
+		if (_p1.X() < _p2.X())
+			return _p1.X();
+		return _p2.X();
+	}
+	double Right(){
+		if (_p1.X() > _p2.X())
+			return _p1.X();
+		return _p2.X();
+	}
+	double Top(){
+		if (_p1.Y() > _p2.Y())
+			return _p1.Y();
+		return _p2.Y();
+	}
+	double Bottom(){
+		if (_p1.Y() < _p2.Y())
+			return _p1.Y();
+		return _p2.Y();
+	}
+
+	static bool InBox(Box2D box, Vector2 p){
+		return p.X() >= box.Left() && p.X() <= box.Right() && p.Y() >= box.Bottom() && p.Y() <= box.Top();
 	}
 };
 //-----------------------------------------------------------

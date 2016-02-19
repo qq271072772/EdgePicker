@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include "Utility.h"
 #include "ImageHelper.h"
 
@@ -9,15 +10,11 @@ namespace EP{
 	class EdgePicker{
 	private:
 		IplImage* m_src;
-		IplImage* m_gray;
-		Dictionary<int, int> m_histogram;
 
-		int m_pixelCnt;
+		List<List<Vector2>> edges;
 
 		static EdgePicker* m_instance;
 
-		const int GRAY_PIXEL = 256;
-		const int PEAK_RANGE = 30;
 	public:
 
 		static EdgePicker* Instance(){
@@ -27,17 +24,15 @@ namespace EP{
 		}
 
 		EdgePicker(){
+			edges.Clear();
 		}
 		~EdgePicker(){
 			ImageHelper::ReleaseImage(&m_src);
-			ImageHelper::ReleaseImage(&m_gray);
 		}
 
 		bool EnsureSrc();
-
 		void LoadSrcImage(char* filename);
-		void InitHistogram();
-		void DealBottom();
+		void LoadEdges(char* filename);
 		
 		void Destroy(){
 			delete this;
