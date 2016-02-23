@@ -10,6 +10,7 @@ namespace EP{
 	class EdgePicker{
 	private:
 		IplImage* m_src;
+		IplImage* m_grabcut;
 
 		List<List<Vector2>> edges;
 
@@ -32,6 +33,7 @@ namespace EP{
 
 		bool EnsureSrc();
 		void LoadSrcImage(char* filename);
+		void LoadGrabCutImage(char* filename);
 		void LoadEdges(char* filename);
 		
 		void Destroy(){

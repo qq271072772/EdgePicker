@@ -10,6 +10,35 @@ namespace EP{
 	void EdgePicker::LoadSrcImage(char* filename){
 		m_src = ImageHelper::LoadImage(filename);
 	}
+	void EdgePicker::LoadGrabCutImage(char* filename){
+		m_grabcut = ImageHelper::LoadImage(filename);
+		IplImage* edge = cvCreateImage(CvSize(m_grabcut->width, m_grabcut->height), IPL_DEPTH_8U, 1);
+
+
+		cvErode(m_grabcut, edge,NULL,2);
+		cvDilate(edge,edge,NULL,2);
+
+		//cvSobel(edge, edge, IPL_DEPTH_8U, 1);
+		//cvLaplace(edge, edge);
+		cvCanny(edge, edge, 50, 150);
+
+		for (int i = 0; i < m_src->height; i++){
+			for (int j = 0; j < m_src->width; j++){
+				uchar bright = ImageHelper::SampleElem(edge, j, i);
+				if (bright == 255)
+					ImageHelper::SetElemRGB(m_src, j, i, RGB(255, 255, 255));
+			}
+		}
+
+		cvSaveImage("output.jpg", edge);
+		IplImage* test = cvCreateImage(CvSize(m_src->width * 0.5, m_src->height * 0.5), m_src->depth, m_src->nChannels);
+		cvResize(m_src, test, CV_INTER_LINEAR);
+		cvShowImage("test", test);
+		cvWaitKey();
+		cvDestroyAllWindows();
+		cvReleaseImage(&test);
+		cvReleaseImage(&edge);
+	}
 	void EdgePicker::LoadEdges(char* filename){
 		char buffer[256];
 		const char* split = "	";
