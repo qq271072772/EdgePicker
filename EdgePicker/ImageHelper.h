@@ -18,6 +18,7 @@ namespace EP{
 		static void SaveImage(char* filename, IplImage* img);
 		static IplImage* Rgb2Gray(IplImage* src);
 		static IplImage* CreateImage(int width, int height, int depth, int channels);
+		static IplImage* CreateCopy(IplImage* src);
 		static void ReleaseImage(IplImage** img);
 
 		static uchar SampleElem(IplImage* src, int x, int y);
@@ -25,7 +26,7 @@ namespace EP{
 		static void SetElem(IplImage* src, int x, int y, uchar value);
 		static void SetElemRGB(IplImage*src ,int x, int y, RGB value);
 
-		static int RGBSimilarity(RGB v1, RGB v2);
+		static int RGBDiff(RGB v1, RGB v2);
 		static int RGB2Hash(RGB v);
 		static RGB Hash2RGB(int hash);
 	};

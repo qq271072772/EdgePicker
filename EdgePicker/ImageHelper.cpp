@@ -17,6 +17,13 @@ namespace EP{
 	IplImage* ImageHelper::CreateImage(int width, int height, int depth, int channels){
 		return cvCreateImage(CvSize(width, height), depth, channels);
 	}
+	IplImage* ImageHelper::CreateCopy(IplImage* src){
+		if (src == NULL)
+			return NULL;
+		IplImage* ret = CreateImage(src->width, src->height, src->height, src->nChannels);
+		cvCopy(src, ret);
+		return ret;
+	}
 	void ImageHelper::ReleaseImage(IplImage** img){
 		if (img != NULL)
 			cvReleaseImage(img);
@@ -49,7 +56,7 @@ namespace EP{
 		CV_IMAGE_ELEM(src, uchar, y, x*src->nChannels + 2) = value.r;
 	}
 
-	int ImageHelper::RGBSimilarity(RGB v1, RGB v2){
+	int ImageHelper::RGBDiff(RGB v1, RGB v2){
 		int diffR = Math::Abs(v1.r - v2.r);
 		int diffG = Math::Abs(v1.g - v2.g);
 		int diffB = Math::Abs(v1.b - v2.b);
