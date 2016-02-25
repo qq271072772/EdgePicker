@@ -4,8 +4,8 @@ using namespace EP;
 
 int main(int argCnt,char** args){
 	EdgePicker* edgePicker = EdgePicker::Instance();
-	edgePicker->LoadSrcImage("E:\\Project\\EdgePicker\\Assets\\Image3.jpg");
-	edgePicker->LoadGrabCutImage("E:\\Project\\EdgePicker\\Assets\\GrabCut3.jpg");
+	edgePicker->LoadSrcImage("E:\\Project\\EdgePicker\\Assets\\Image4.jpg");
+	edgePicker->LoadGrabCutImage("E:\\Project\\EdgePicker\\Assets\\GrabCut4.jpg");
 	edgePicker->PickEdge();
 	//edgePicker->LoadEdges("E:\\Project\\EdgePicker\\Assets\\Image2.txt");
 	edgePicker->Destroy();

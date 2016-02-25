@@ -76,7 +76,7 @@ namespace EP{
 		ImageHelper::SaveImage("meanshift.jpg", m_src);
 		//return;
 
-		IplImage* figure1 = GenerateFigure(m_src, m_grabcut, 2, 3, RGB(0, 255, 0));
+		IplImage* figure1 = GenerateFigure(m_src, m_grabcut, 4, 6, RGB(0, 255, 0));
 		IplImage* figure2 = GenerateFigure(m_src, m_grabcut, 8, 20, RGB(255, 255, 255));
 
 		List<List<Vector2>> edges1 = GenerateEdgeData(figure1);
@@ -110,7 +110,7 @@ namespace EP{
 	
 		CvMemStorage* edgeMem = cvCreateMemStorage();
 		CvSeq* edgeSeq = NULL;
-		cvFindContours(edgeImg, edgeMem, &edgeSeq,sizeof(CvContour),1,CV_CHAIN_APPROX_SIMPLE);
+		cvFindContours(edgeImg, edgeMem, &edgeSeq,sizeof(CvContour),1,CV_CHAIN_APPROX_NONE);
 
 		while (edgeSeq != NULL){
 			edges.Add(List<Vector2>());
@@ -131,9 +131,10 @@ namespace EP{
 			double boxDiff;
 			List<int> points1;
 			List<int> points2;
+			Dictionary<int, int>histogram;
+			int peakBrightness;
 		};
 
-		Dictionary<int, int> histogram;
 		List<EdgePair> edgePairs;
 		List<Box2D> boxes1, boxes2;
 
@@ -206,44 +207,47 @@ namespace EP{
 
 		//Generate historgram
 		IplImage* gray = ImageHelper::Rgb2Gray(m_src);
-		//for (int i = 0; i < edgePairs.Count(); i++){
-		//	int e1 = edgePairs[i].index1;
-		//	int e2 = edgePairs[i].index2;
-		//	for (int j = 0; j < edgePairs[i].points1.Count(); j++){
-		//		Vector2 p1 = edges1[e1][edgePairs[i].points1[j]];
-		//		Vector2 p2 = edges2[e2][edgePairs[i].points2[j]];
-		//		Box2D box(p1, p2);
-		//		Line2D line(p1, p2);
-		//		if (line.Perpendicular()){
-		//			for (int k = box.Bottom(); k <= box.Top(); k++){
-		//				uchar value = ImageHelper::SampleElem(gray, p1.X(), k);
-		//				if (!histogram.ContainsKey(value))
-		//					histogram.Add(value, 0);
-		//				histogram[value]++;
-		//			}
-		//		}
-		//		else{
-		//			for (int k = box.Left(); k <= box.Right(); k++){
-		//				int y = Line2D::Sample(line, k);
-		//				uchar value = ImageHelper::SampleElem(gray, k, y);
-		//				if (!histogram.ContainsKey(value))
-		//					histogram.Add(value, 0);
-		//				histogram[value]++;
-		//			}
-		//		}
-		//	}
-		//}
+		for (int i = 0; i < edgePairs.Count(); i++){
+			int e1 = edgePairs[i].index1;
+			int e2 = edgePairs[i].index2;
+			edgePairs[i].histogram.Clear();
+			for (int j = 0; j < edgePairs[i].points1.Count(); j++){
+				Vector2 p1 = edges1[e1][edgePairs[i].points1[j]];
+				Vector2 p2 = edges2[e2][edgePairs[i].points2[j]];
+				Box2D box(p1, p2);
+				Line2D line(p1, p2);
+				if (line.Perpendicular()){
+					for (int k = box.Bottom(); k <= box.Top(); k++){
+						uchar value = ImageHelper::SampleElem(gray, p1.X(), k);
+						if (!edgePairs[i].histogram.ContainsKey(value))
+							edgePairs[i].histogram.Add(value, 0);
+						edgePairs[i].histogram[value]++;
+					}
+				}
+				else{
+					for (int k = box.Left(); k <= box.Right(); k++){
+						int y = Line2D::Sample(line, k);
+						uchar value = ImageHelper::SampleElem(gray, k, y);
+						if (!edgePairs[i].histogram.ContainsKey(value))
+							edgePairs[i].histogram.Add(value, 0);
+						edgePairs[i].histogram[value]++;
+					}
+				}
+			}
+		}
 
 		//Find histogram's Peak
-		//int peak = -1;
-		//int maxCnt = 0;
-		//List<int> keys = histogram.Keys();
-		//for (int i = 0; i < keys.Count(); i++){
-		//	if (histogram[keys[i]]>maxCnt){
-		//		maxCnt = histogram[keys[i]];
-		//		peak = keys[i];
-		//	}
-		//}
+		for (int i = 0; i < edgePairs.Count(); i++){
+			List<int> keys = edgePairs[i].histogram.Keys();
+			edgePairs[i].peakBrightness = -1;
+			int maxCnt = 0;
+			for (int j = 0; j < keys.Count(); j++){
+				if (edgePairs[i].histogram[keys[j]]>maxCnt){
+					maxCnt = edgePairs[i].histogram[keys[j]];
+					edgePairs[i].peakBrightness = keys[j];
+				}
+			}
+		}
 
 		//Coordinate edges
 		int grayThreshold = 76;
@@ -261,6 +265,7 @@ namespace EP{
 					int targetY = -1;
 					for (int k = p1.Y(); k != p2.Y(); k+=inc){
 						uchar value = ImageHelper::SampleElem(gray, p1.X(), k);
+						//if (Math::Abs(value - edgePairs[i].peakBrightness)>GRAY_THRESHOLD){
 						if (value<grayThreshold){
 							targetY = k;
 							break;
@@ -276,6 +281,7 @@ namespace EP{
 					for (int k = p1.X(); k != p2.X(); k+=inc){
 						int y = Line2D::Sample(line, k);
 						uchar value = ImageHelper::SampleElem(gray, k, y);
+						//if (Math::Abs(value - edgePairs[i].peakBrightness)>GRAY_THRESHOLD){
 						if (value<grayThreshold){
 							targetX = k;
 							break;
@@ -287,6 +293,7 @@ namespace EP{
 				}
 			}
 		}
+		cvCvtColor(gray, m_src, CV_GRAY2RGB);
 		ImageHelper::ReleaseImage(&gray);
 	}
 
