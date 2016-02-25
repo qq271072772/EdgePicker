@@ -160,6 +160,7 @@ namespace EP{
 			EdgePair pair;
 			pair.index1 = i;
 			pair.index2 = target;
+			pair.boxDiff = minDiff;
 			edgePairs.Add(pair);
 		}
 
