@@ -4,6 +4,9 @@ namespace EP{
 	IplImage* ImageHelper::LoadImage(char* filename){
 		return cvLoadImage(filename, CV_LOAD_IMAGE_UNCHANGED);
 	}
+	void ImageHelper::SaveImage(char* filename, IplImage* img){
+		cvSaveImage(filename, img);
+	}
 	IplImage* ImageHelper::Rgb2Gray(IplImage* src){
 		if (src == NULL)
 			return NULL;
@@ -11,6 +14,14 @@ namespace EP{
 		cvCvtColor(src, ret, CV_RGB2GRAY);
 		return ret;
 	}
+	IplImage* ImageHelper::CreateImage(int width, int height, int depth, int channels){
+		return cvCreateImage(CvSize(width, height), depth, channels);
+	}
+	void ImageHelper::ReleaseImage(IplImage** img){
+		if (img != NULL)
+			cvReleaseImage(img);
+	}
+
 	uchar ImageHelper::SampleElem(IplImage* src, int x, int y){
 		if (src == NULL || src->nChannels != 1)
 			return -1;
@@ -37,8 +48,25 @@ namespace EP{
 		CV_IMAGE_ELEM(src, uchar, y, x*src->nChannels + 1) = value.g;
 		CV_IMAGE_ELEM(src, uchar, y, x*src->nChannels + 2) = value.r;
 	}
-	void ImageHelper::ReleaseImage(IplImage** src){
-		if (src != NULL)
-			cvReleaseImage(src);
+
+	int ImageHelper::RGBSimilarity(RGB v1, RGB v2){
+		int diffR = Math::Abs(v1.r - v2.r);
+		int diffG = Math::Abs(v1.g - v2.g);
+		int diffB = Math::Abs(v1.b - v2.b);
+		if (diffR < diffG && diffR < diffB)
+			return diffR;
+		if (diffG < diffB)
+			return diffG;
+		return diffB;
+	}
+	int ImageHelper::RGB2Hash(RGB v){
+		return v.r * 256 * 256 + v.g * 256 + v.b;
+	}
+	RGB ImageHelper::Hash2RGB(int hash){
+		RGB ret;
+		ret.r = hash / 256 / 256;
+		ret.g = hash / 256 % 256;
+		ret.b = hash % 256;
+		return ret;
 	}
 }

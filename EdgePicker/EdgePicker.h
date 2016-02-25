@@ -12,9 +12,12 @@ namespace EP{
 		IplImage* m_src;
 		IplImage* m_grabcut;
 
-		List<List<Vector2>> edges;
+		List<List<Vector2>> m_edges;
 
 		static EdgePicker* m_instance;
+
+		const int CHANNEL_1_WHITE = 255;
+		const int GRAY_THRESHOLD = 50;
 
 	public:
 
@@ -25,7 +28,7 @@ namespace EP{
 		}
 
 		EdgePicker(){
-			edges.Clear();
+			m_edges.Clear();
 		}
 		~EdgePicker(){
 			ImageHelper::ReleaseImage(&m_src);
@@ -35,6 +38,18 @@ namespace EP{
 		void LoadSrcImage(char* filename);
 		void LoadGrabCutImage(char* filename);
 		void LoadEdges(char* filename);
+
+		void PickEdge();
+
+		IplImage* GenerateFigure(IplImage* src, IplImage* grabcut,int erosion, int dilation, RGB value);
+		List<List<Vector2>> GenerateEdgeData(IplImage* edgeImg);
+		
+		void CoordinateEdge(List<List<Vector2>>& edge1,List<List<Vector2>>& edge2);
+
+		Box2D GenerateEdgeBox(List<Vector2>& edge);
+		double BoxDiff(Box2D& box1, Box2D& box2);
+
+		void DebugDrawEdges(List<List<Vector2>> edges, RGB color);
 		
 		void Destroy(){
 			delete this;

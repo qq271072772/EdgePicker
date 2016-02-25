@@ -55,6 +55,12 @@ public:
 	Vector2 operator/(double rhs){
 		return Vector2(_x / rhs,_y / rhs);
 	}
+
+	static double Distance(Vector2 p1, Vector2 p2){
+		double disX = p1.X() - p2.X();
+		double disY = p1.Y() - p2.Y();
+		return sqrt(disX*disX + disY*disY);
+	}
 };
 //-----------------------------------------------------------
 class Line2D{
@@ -93,6 +99,11 @@ public:
 		if (line.Perpendicular())
 			return abs(line.X()-p.X());
 		return abs(line.K()*p.X() - p.Y() + line.B())/sqrt(1+line.K()*line.K());
+	}
+	static double Sample(Line2D line, double x){
+		if (line.Perpendicular())
+			return -1;
+		return line.K()*x + line.B();
 	}
 };
 //-----------------------------------------------------------
