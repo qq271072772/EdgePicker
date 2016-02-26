@@ -31,7 +31,8 @@ namespace EP{
 			m_edges.Clear();
 		}
 		~EdgePicker(){
-			ImageHelper::ReleaseImage(&m_src);
+			if (m_src != NULL)
+				ImageHelper::ReleaseImage(&m_src);
 		}
 
 		bool EnsureSrc();

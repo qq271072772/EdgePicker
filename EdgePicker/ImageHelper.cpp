@@ -59,10 +59,11 @@ namespace EP{
 	int ImageHelper::RGBDiff(RGB v1, RGB v2){
 		int diffR = Math::Abs(v1.r - v2.r);
 		int diffG = Math::Abs(v1.g - v2.g);
-		int diffB = Math::Abs(v1.b - v2.b);
-		if (diffR < diffG && diffR < diffB)
+		int diffB = Math::Abs(v1.b - v2.b); 
+
+		if (diffR > diffG && diffR > diffB)
 			return diffR;
-		if (diffG < diffB)
+		if (diffG > diffB)
 			return diffG;
 		return diffB;
 	}
@@ -75,5 +76,8 @@ namespace EP{
 		ret.g = hash / 256 % 256;
 		ret.b = hash % 256;
 		return ret;
+	}
+	int ImageHelper::RGB2GRAY(RGB rgb){
+		return (rgb.r + rgb.g + rgb.b) / 3;
 	}
 }

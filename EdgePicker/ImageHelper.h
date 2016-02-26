@@ -29,5 +29,6 @@ namespace EP{
 		static int RGBDiff(RGB v1, RGB v2);
 		static int RGB2Hash(RGB v);
 		static RGB Hash2RGB(int hash);
+		static int RGB2GRAY(RGB rgb);
 	};
 }
