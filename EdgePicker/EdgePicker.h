@@ -17,7 +17,7 @@ namespace EP{
 		static EdgePicker* m_instance;
 
 		const int CHANNEL_1_WHITE = 255;
-		const int GRAY_THRESHOLD = 40;
+		const int COLOR_THRESHOLD = 60;
 
 	public:
 

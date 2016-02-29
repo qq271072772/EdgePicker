@@ -61,11 +61,13 @@ namespace EP{
 		int diffG = Math::Abs(v1.g - v2.g);
 		int diffB = Math::Abs(v1.b - v2.b); 
 
-		if (diffR > diffG && diffR > diffB)
-			return diffR;
-		if (diffG > diffB)
-			return diffG;
-		return diffB;
+		return sqrt(diffR*diffR + diffG*diffG + diffB*diffB);
+
+		//if (diffR > diffG && diffR > diffB)
+		//	return diffR;
+		//if (diffG > diffB)
+		//	return diffG;
+		//return diffB;
 	}
 	int ImageHelper::RGB2Hash(RGB v){
 		return v.r * 256 * 256 + v.g * 256 + v.b;

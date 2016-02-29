@@ -30,6 +30,12 @@ public:
 	static bool Equal(double x,double y){
 		return Abs(x-y)<1e-20;
 	}
+	static int Round(double x){
+		double decimal = x - (double)(int)x;
+		if (decimal < 0.5f)
+			return (int)x;
+		return ((int)x) + 1;
+	}
 
 };
 //-----------------------------------------------------------

@@ -72,25 +72,22 @@ namespace EP{
 	}
 
 	void EdgePicker::PickEdge(){
-		cvPyrMeanShiftFiltering(m_src, m_src, 8, 16);
-		ImageHelper::SaveImage("meanshift.jpg", m_src);
-		//return;
 
-		IplImage* figure1 = GenerateFigure(m_src, m_grabcut, 6, 8, RGB(0, 255, 0));
-		IplImage* figure2 = GenerateFigure(m_src, m_grabcut, 8, 22, RGB(255, 255, 255));
+		IplImage* figure1 = GenerateFigure(m_src, m_grabcut, 6, 9, RGB(0, 255, 0));
+		//IplImage* figure2 = GenerateFigure(m_src, m_grabcut, 8, 22, RGB(255, 255, 255));
 
 		List<List<Vector2>> edges1 = GenerateEdgeData(figure1);
-		List<List<Vector2>> edges2 = GenerateEdgeData(figure2);
+		//List<List<Vector2>> edges2 = GenerateEdgeData(figure2);
 
-		CoordinateEdge(edges1, edges2);
+		//CoordinateEdge(edges1, edges2);
 
 		DebugDrawEdges(edges1, RGB(0, 0, 255));
-		DebugDrawEdges(edges2, RGB(0, 255, 0));
-		DebugDrawEdges(m_edges, RGB(255, 255, 255));
+		//DebugDrawEdges(edges2, RGB(0, 255, 0));
+		//DebugDrawEdges(m_edges, RGB(255, 255, 255));
 		ImageHelper::SaveImage("output.jpg", m_src);
 
 		ImageHelper::ReleaseImage(&figure1);
-		ImageHelper::ReleaseImage(&figure2);
+		//ImageHelper::ReleaseImage(&figure2);
 	}
 
 	IplImage* EdgePicker::GenerateFigure(IplImage* src, IplImage* grabcut, int erosion, int dilation, RGB value){
@@ -166,11 +163,11 @@ namespace EP{
 
 		//Sort by boxDiff
 		for (int i = 1; i < edgePairs.Count(); i++){
-			for (int j = i - 1; j >= 0; j--){
-				if (edgePairs[i].boxDiff < edgePairs[j].boxDiff){
-					EdgePair tmp = edgePairs[j];
-					edgePairs[j] = edgePairs[i];
-					edgePairs[i] = tmp;
+			for (int j = i ; j >= 1; j--){
+				if (edgePairs[j].boxDiff < edgePairs[j-1].boxDiff){
+					EdgePair tmp = edgePairs[j-1];
+					edgePairs[j-1] = edgePairs[j];
+					edgePairs[j] = tmp;
 				}
 			}
 		}
@@ -251,7 +248,6 @@ namespace EP{
 		//}
 
 		//Coordinate edges
-		int rgbThreshold = 0;
 		m_edges.Clear();
 		for (int i = 0; i < edgePairs.Count(); i++){
 			m_edges.Add(List<Vector2>());
@@ -261,12 +257,12 @@ namespace EP{
 				Vector2 p1 = edges1[e1][edgePairs[i].points1[j]];
 				Vector2 p2 = edges2[e2][edgePairs[i].points2[j]];
 				Line2D line(p1, p2);
-				//RGB baseValue = ImageHelper::SampleElemRGB(m_src, p1.X(), p1.Y());
+				RGB baseValue = ImageHelper::SampleElemRGB(m_src, p1.X(), p1.Y());
 				if (line.Perpendicular()){
 					int inc = p1.Y() < p2.Y() ? 1 : -1;
 					int targetY = -1;
 					int maxbrightness = 0;
-					Vector2 baseP;
+					Vector2 baseP(p1.X(),p1.Y());
 					for (int k = p1.Y(); k != p2.Y(); k += inc){
 						RGB value = ImageHelper::SampleElemRGB(m_src, p1.X(), k);
 						if (ImageHelper::RGB2GRAY(value) > maxbrightness){
@@ -274,10 +270,10 @@ namespace EP{
 							baseP = Vector2(p1.X(), k);
 						}
 					}
-					RGB baseValue = ImageHelper::SampleElemRGB(m_src, baseP.X(), baseP.Y());
+					//RGB baseValue = ImageHelper::SampleElemRGB(m_src, baseP.X(), baseP.Y());
 					for (int k = p1.Y(); k != p2.Y(); k+=inc){
 						RGB value = ImageHelper::SampleElemRGB(m_src, p1.X(), k);
-						if (ImageHelper::RGBDiff(value,baseValue)>rgbThreshold){
+						if (ImageHelper::RGBDiff(value, baseValue)>COLOR_THRESHOLD){
 							targetY = k;
 							break;
 						}
@@ -287,30 +283,72 @@ namespace EP{
 					m_edges[i].Add(Vector2(p1.X(), targetY));
 				}
 				else{
-					int inc = p1.X() < p2.X() ? 1 : -1;
-					int targetX = -1;
+
+					RGB baseValue = ImageHelper::SampleElemRGB(m_src, p1.X(), p1.Y());
+					int xDiff = Math::Abs(p1.X() - p2.X());	
+					int yDiff = Math::Abs(p1.Y() - p2.Y());
+					double step;
+					if (yDiff != 0)
+						step = (double)xDiff / (double)yDiff;
+					else
+						step = 1;
+					if (step > 1)
+						step = 1;
+
+					double realX = p1.X();
 					int maxbrightness = 0;
 					Vector2 baseP;
-					for (int k = p1.X(); k != p2.X(); k += inc){
-						int y = Line2D::Sample(line, k);
-						RGB value = ImageHelper::SampleElemRGB(m_src, k, y);
+					while (true){
+						int x = Math::Round(realX);
+						int y = Math::Round(Line2D::Sample(line, realX));
+
+						RGB value = ImageHelper::SampleElemRGB(m_src, x, y);
 						if (ImageHelper::RGB2GRAY(value) > maxbrightness){
 							maxbrightness = ImageHelper::RGB2GRAY(value);
-							baseP = Vector2(k, y);
+							baseP = Vector2(x, y);
+						}
+
+						if (p1.X() < p2.X()){
+							realX += step;
+							if (realX > (p2.X()+0.0001f))
+								break;
+						}
+						if (p1.X() > p2.X()){
+							realX -= step;
+							if (realX <  (p2.X() + 0.0001f))
+								break;
 						}
 					}
-					RGB baseValue = ImageHelper::SampleElemRGB(m_src, baseP.X(), baseP.Y());
-					for (int k = p1.X(); k != p2.X(); k+=inc){
-						int y = Line2D::Sample(line, k);
-						RGB value = ImageHelper::SampleElemRGB(m_src, k, y);
-						if (ImageHelper::RGBDiff(value, baseValue) > rgbThreshold){
-							targetX = k;
+					//RGB baseValue = ImageHelper::SampleElemRGB(m_src, baseP.X(), baseP.Y());
+
+					//if (p1.X()==1130 && p1.Y()==241){
+					//	int x = 1;
+					//}
+					int targetX = p1.X(), targetY = p1.Y();
+					realX = p1.X();
+					while (true){
+						int x = Math::Round(realX);
+						int y = Math::Round(Line2D::Sample(line, realX));
+
+						RGB value = ImageHelper::SampleElemRGB(m_src, x, y);
+						if (ImageHelper::RGBDiff(value, baseValue) > COLOR_THRESHOLD){
 							break;
 						}
+						targetX = x;
+						targetY = y;
+
+						if (p1.X() < p2.X()){
+							realX += step;
+							if (realX >  (p2.X() + 0.0001f))
+								break;
+						}
+						if (p1.X() > p2.X()){
+							realX -= step;
+							if (realX <  (p2.X() + 0.0001f))
+								break;
+						}
 					}
-					if (targetX < 0)
-						targetX = p2.X();
-					m_edges[i].Add(Vector2(targetX, Line2D::Sample(line, targetX)));
+					m_edges[i].Add(Vector2(targetX, targetY));
 				}
 			}
 		}
