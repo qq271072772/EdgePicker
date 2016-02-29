@@ -19,6 +19,15 @@ namespace EP{
 		const int CHANNEL_1_WHITE = 255;
 		const int COLOR_THRESHOLD = 60;
 
+		void CoordinateFigure(IplImage* figure, int erosion, int dilation);
+		List<List<Vector2>> GenerateEdgeData(IplImage* figure);
+		void CoordinateEdge(List<List<Vector2>>& edge1, List<List<Vector2>>& edge2);
+		Box2D GenerateEdgeBox(List<Vector2>& edge);
+		double BoxDiff(Box2D& box1, Box2D& box2);
+
+		IplImage* FillEdges(List<List<Vector2>> &edges);
+		bool IsInterior(List<Vector2> edge, Vector2 p);
+
 	public:
 
 		static EdgePicker* Instance(){
@@ -42,15 +51,7 @@ namespace EP{
 
 		void PickEdge();
 
-		IplImage* GenerateFigure(IplImage* src, IplImage* grabcut,int erosion, int dilation, RGB value);
-		List<List<Vector2>> GenerateEdgeData(IplImage* edgeImg);
-		
-		void CoordinateEdge(List<List<Vector2>>& edge1,List<List<Vector2>>& edge2);
-
-		Box2D GenerateEdgeBox(List<Vector2>& edge);
-		double BoxDiff(Box2D& box1, Box2D& box2);
-
-		void DebugDrawEdges(List<List<Vector2>> edges, RGB color);
+		void DrawEdges(IplImage* src, List<List<Vector2>> &edges, RGB color);
 		
 		void Destroy(){
 			delete this;

@@ -49,65 +49,78 @@ namespace EP{
 				break;
 		}
 
-		IplImage* test = cvCreateImage(CvSize(m_src->width, m_src->height), IPL_DEPTH_8U, 1);
-		cvZero(test);
-		cv::Mat testMat = cv::cvarrToMat(test);
-		for (int i = 0; i < m_edges.Count(); i++){
-		//	if (edges[i].Count()>100)
-			for (int j = 1; j < m_edges[i].Count(); j++){
-				cvLine(test, cvPoint(m_edges[i][j - 1].X(), m_edges[i][j - 1].Y()), cvPoint(m_edges[i][j].X(), m_edges[i][j].Y()), CV_RGB(0, 0, 255));
-					//cvCircle(test, cvPoint(edges[i][j].X(), edges[i][j].Y()), 3, CV_RGB(0, 0, 255), 3);
-					//ImageHelper::SetElem(test, edges[i][j].X(), edges[i][j].Y(), 255);
-				}
-			cvLine(test, cvPoint(m_edges[i][m_edges[i].Count() - 1].X(), m_edges[i][m_edges[i].Count() - 1].Y()),
-				cvPoint(m_edges[i][0].X(), m_edges[i][0].Y()), CV_RGB(0, 0, 255));
-		}
-		IplImage* test2 = cvCreateImage(CvSize(m_src->width*0.5, m_src->height*0.5), IPL_DEPTH_8U, 1);
-		cvResize(test, test2,CV_INTER_LINEAR);
-		cvShowImage("test", test2);
-		cvWaitKey();
-		cvDestroyAllWindows();
-		cvReleaseImage(&test);
-		cvReleaseImage(&test2);
+		//IplImage* test = cvCreateImage(CvSize(m_src->width, m_src->height), IPL_DEPTH_8U, 1);
+		//cvZero(test);
+		//cv::Mat testMat = cv::cvarrToMat(test);
+		//for (int i = 0; i < m_edges.Count(); i++){
+		////	if (edges[i].Count()>100)
+		//	for (int j = 1; j < m_edges[i].Count(); j++){
+		//		cvLine(test, cvPoint(m_edges[i][j - 1].X(), m_edges[i][j - 1].Y()), cvPoint(m_edges[i][j].X(), m_edges[i][j].Y()), CV_RGB(0, 0, 255));
+		//			//cvCircle(test, cvPoint(edges[i][j].X(), edges[i][j].Y()), 3, CV_RGB(0, 0, 255), 3);
+		//			//ImageHelper::SetElem(test, edges[i][j].X(), edges[i][j].Y(), 255);
+		//		}
+		//	cvLine(test, cvPoint(m_edges[i][m_edges[i].Count() - 1].X(), m_edges[i][m_edges[i].Count() - 1].Y()),
+		//		cvPoint(m_edges[i][0].X(), m_edges[i][0].Y()), CV_RGB(0, 0, 255));
+		//}
+		//IplImage* test2 = cvCreateImage(CvSize(m_src->width*0.5, m_src->height*0.5), IPL_DEPTH_8U, 1);
+		//cvResize(test, test2,CV_INTER_LINEAR);
+		//cvShowImage("test", test2);
+		//cvWaitKey();
+		//cvDestroyAllWindows();
+		//cvReleaseImage(&test);
+		//cvReleaseImage(&test2);
 	}
 
 	void EdgePicker::PickEdge(){
+		IplImage* edgeImg = ImageHelper::CreateImage(m_src->width, m_src->height, IPL_DEPTH_8U, 1);
+		cvZero(edgeImg);
+		DrawEdges(edgeImg, m_edges, RGB(255, 255, 255));
+		ImageHelper::SaveImage("edge.jpg", edgeImg);
 
-		IplImage* figure1 = GenerateFigure(m_src, m_grabcut, 6, 9, RGB(0, 255, 0));
-		//IplImage* figure2 = GenerateFigure(m_src, m_grabcut, 8, 22, RGB(255, 255, 255));
+		IplImage* figure = FillEdges(m_edges);
+		ImageHelper::SaveImage("figure.jpg", figure);
+		CoordinateFigure(figure, 6, 11);
+		List<List<Vector2>> edges = GenerateEdgeData(figure);
 
-		List<List<Vector2>> edges1 = GenerateEdgeData(figure1);
+		DrawEdges(m_src, edges, RGB(0, 0, 255));
+		ImageHelper::SaveImage("output.jpg", m_src);
+
+		ImageHelper::ReleaseImage(&figure);
+		ImageHelper::ReleaseImage(&edgeImg);
+
+		//---------------------------------------------------------------------------------------------------Method grabcut
+		//IplImage* figure1 = CoordinateFigure(m_grabcut, 6, 9);
+		//IplImage* figure2 = CoordinateFigure(m_grabcut, 8, 22);
+
+		//List<List<Vector2>> edges1 = GenerateEdgeData(figure1);
 		//List<List<Vector2>> edges2 = GenerateEdgeData(figure2);
 
 		//CoordinateEdge(edges1, edges2);
 
-		DebugDrawEdges(edges1, RGB(0, 0, 255));
-		//DebugDrawEdges(edges2, RGB(0, 255, 0));
-		//DebugDrawEdges(m_edges, RGB(255, 255, 255));
-		ImageHelper::SaveImage("output.jpg", m_src);
+		//DrawEdges(edges1, RGB(0, 0, 255));
+		//DrawEdges(edges2, RGB(0, 255, 0));
+		//DrawEdges(m_edges, RGB(255, 255, 255));
+		//ImageHelper::SaveImage("output.jpg", m_src);
 
-		ImageHelper::ReleaseImage(&figure1);
+		//ImageHelper::ReleaseImage(&figure1);
 		//ImageHelper::ReleaseImage(&figure2);
+		//---------------------------------------------------------------------------------------------------Method grabcut
 	}
 
-	IplImage* EdgePicker::GenerateFigure(IplImage* src, IplImage* grabcut, int erosion, int dilation, RGB value){
-		if (src==NULL || grabcut==NULL || grabcut->nChannels != 1)
-			return NULL;
-		IplImage* edge = ImageHelper::CreateImage(grabcut->width, grabcut->height, grabcut->depth, grabcut->nChannels);
-
-		cvErode(grabcut, edge, NULL, erosion);
-		cvDilate(edge, edge, NULL, dilation);
-
-		return edge;
+	void EdgePicker::CoordinateFigure(IplImage* figure, int erosion, int dilation){
+		if (figure == NULL || figure->nChannels != 1)
+			return;
+		cvErode(figure, figure, NULL, erosion);
+		cvDilate(figure, figure, NULL, dilation);
 	}
-	List<List<Vector2>> EdgePicker::GenerateEdgeData(IplImage* edgeImg){
+	List<List<Vector2>> EdgePicker::GenerateEdgeData(IplImage* figure){
 		List<List<Vector2>> edges;
-		if (edgeImg == NULL || edgeImg->nChannels != 1)
+		if (figure == NULL || figure->nChannels != 1)
 			return edges;
 	
 		CvMemStorage* edgeMem = cvCreateMemStorage();
 		CvSeq* edgeSeq = NULL;
-		cvFindContours(edgeImg, edgeMem, &edgeSeq,sizeof(CvContour),1,CV_CHAIN_APPROX_SIMPLE);
+		cvFindContours(figure, edgeMem, &edgeSeq, sizeof(CvContour), 1, CV_CHAIN_APPROX_SIMPLE);
 
 		while (edgeSeq != NULL){
 			edges.Add(List<Vector2>());
@@ -122,6 +135,7 @@ namespace EP{
 
 		return edges;
 	}
+
 	void EdgePicker::CoordinateEdge(List<List<Vector2>>& edges1, List<List<Vector2>>& edges2){
 		struct EdgePair{
 			int index1, index2;
@@ -258,7 +272,7 @@ namespace EP{
 				Vector2 p2 = edges2[e2][edgePairs[i].points2[j]];
 				Line2D line(p1, p2);
 				RGB baseValue = ImageHelper::SampleElemRGB(m_src, p1.X(), p1.Y());
-				if (line.Perpendicular()){
+				if (line.Vertical()){
 					int inc = p1.Y() < p2.Y() ? 1 : -1;
 					int targetY = -1;
 					int maxbrightness = 0;
@@ -355,7 +369,6 @@ namespace EP{
 
  		ImageHelper::ReleaseImage(&gray);
 	}
-
 	Box2D EdgePicker::GenerateEdgeBox(List<Vector2>& edge){
 		int maxX = 0, maxY = 0;
 		int minX = INT_MAX, minY = INT_MAX;
@@ -379,12 +392,55 @@ namespace EP{
 		return sqrt(diffLeft*diffLeft + diffRight*diffRight + diffTop*diffTop + diffBot*diffBot);
 	}
 
-	void EdgePicker::DebugDrawEdges(List<List<Vector2>> edges, RGB color){
+	IplImage* EdgePicker::FillEdges(List<List<Vector2>> &edges){
+		IplImage* figure = ImageHelper::CreateImage(m_src->width, m_src->height, IPL_DEPTH_8U, 1);
+		cvZero(figure);
+		DrawEdges(figure, edges, RGB(255, 255, 255));
+		for (int i = 0; i < edges.Count(); i++){
+			for (int j = 0; j < edges[i].Count(); j++){
+				bool complete = false;
+				Vector2 p = edges[i][j];
+				for (int x = -1; x < 2; x++){
+					for (int y = -1; y < 2; y++){
+						Vector2 sampleP = Vector2(p.X() + x, p.Y() + y);
+						if (IsInterior(edges[i], sampleP) && ImageHelper::SampleElem(figure, sampleP.X(), sampleP.Y()) != 255){
+							cvFloodFill(figure, CvPoint(sampleP.X(), sampleP.Y()), CvScalar(255, 255, 255));
+							complete = true;
+							break;
+						}
+					}
+					if (complete)
+						break;
+				}
+				if (complete)
+					break;
+			}
+		}
+		return figure;
+	}
+	bool EdgePicker::IsInterior(List<Vector2> edge, Vector2 p){
+		int interPointCnt = 0;
+		Ray2D ray(p, Vector2(p.X() - 1, p.Y()));
+		for (int i = 1; i != 0; i++){
+			int index = i;
+			Vector2 p1 = edge[index - 1];
+			if (index == edge.Count()){
+				index = 0;
+				i = -1;
+			}
+			Vector2 p2 = edge[index];
+			if (Ray2D::Intersection(ray, p1, p2))
+				interPointCnt++;
+		}
+		return interPointCnt % 2 != 0;
+	}
+
+	void EdgePicker::DrawEdges(IplImage* src,List<List<Vector2>> &edges, RGB color){
 		for (int i = 0; i < edges.Count(); i++){
 			for (int j = 1; j < edges[i].Count(); j++){
-				cvLine(m_src, CvPoint(edges[i][j - 1].X(), edges[i][j - 1].Y()), CvPoint(edges[i][j].X(), edges[i][j].Y()), CvScalar(color.b, color.g, color.r));
+				cvLine(src, CvPoint(edges[i][j - 1].X(), edges[i][j - 1].Y()), CvPoint(edges[i][j].X(), edges[i][j].Y()), CvScalar(color.b, color.g, color.r));
 			}
-			cvLine(m_src, CvPoint(edges[i][edges[i].Count() - 1].X(), edges[i][edges[i].Count() - 1].Y()),
+			cvLine(src, CvPoint(edges[i][edges[i].Count() - 1].X(), edges[i][edges[i].Count() - 1].Y()),
 				CvPoint(edges[i][0].X(), edges[i][0].Y()), CvScalar(color.b, color.g, color.r));
 		}
 	}

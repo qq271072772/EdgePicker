@@ -61,6 +61,9 @@ public:
 	Vector2 operator/(double rhs){
 		return Vector2(_x / rhs,_y / rhs);
 	}
+	bool operator==(Vector2 rhs){
+		return Math::Equal(_x, rhs.X()) && Math::Equal(_y, rhs.Y());
+	}
 
 	static double Distance(Vector2 p1, Vector2 p2){
 		double disX = p1.X() - p2.X();
@@ -75,6 +78,13 @@ private:
 	double _b;
 	double _x;
 public:
+
+	enum PointPosition{
+		LINE_AT,
+		LINE_LEFT,
+		LINE_RIGHT,
+	};
+
 	Line2D(){};
 	Line2D(double k, double b){
 		_k=k;
@@ -94,7 +104,7 @@ public:
 	double B(){return _b;}
 	double X(){return _x;}
 	
-	bool Perpendicular(){
+	bool Vertical(){
 		return Math::Equal(_k, DBL_MAX);
 	}
 	
@@ -102,14 +112,45 @@ public:
 		return Math::Equal(line.K(), DBL_MAX);
 	}
 	static double Distance(Line2D line, Vector2 p){
-		if (line.Perpendicular())
+		if (line.Vertical())
 			return abs(line.X()-p.X());
 		return abs(line.K()*p.X() - p.Y() + line.B())/sqrt(1+line.K()*line.K());
 	}
 	static double Sample(Line2D line, double x){
-		if (line.Perpendicular())
+		if (line.Vertical())
 			return -1;
 		return line.K()*x + line.B();
+	}
+	static PointPosition PointPos(Line2D line, Vector2 p){
+		if (Math::Equal(line.K(), DBL_MAX)){
+			if (Math::Equal(p.X(), line.X()))
+				return LINE_AT;
+			return p.X() < line.X() ? LINE_LEFT : LINE_RIGHT;
+		}
+		if (Math::Equal(line.K(), 0)){
+			if (Math::Equal(p.Y(), line.B()))
+				return LINE_AT;
+			return p.Y() > line.B() ? LINE_LEFT : LINE_RIGHT;
+		}
+		double ret = p.Y() - line.K()*p.X() - line.B();
+		if (Math::Equal(ret, 0))
+			return LINE_AT;
+		return line.K() < 0 ? (ret < 0 ? LINE_LEFT : LINE_RIGHT) : (ret>0 ? LINE_LEFT : LINE_RIGHT);
+	}
+	static bool InterSection(Line2D line1, Line2D line2){
+		if (Math::Equal(line1.K(), line2.K()))
+			return false;
+		return true;
+	}
+	static Vector2 InterSectionPos(Line2D line1, Line2D line2){
+		if (Math::Equal(line1.K(), line2.K()))
+			return Vector2(DBL_MAX, DBL_MAX);
+		if (line1.Vertical())
+			return Vector2(line1.X(), Sample(line2, line1.X()));
+		if (line2.Vertical())
+			return Vector2(line2.X(), Sample(line1, line2.X()));
+		double x = (line2.B() - line1.B()) / (double)(line1.K() - line2.K());
+		return Vector2(x, Sample(line1, x));
 	}
 };
 //-----------------------------------------------------------
@@ -144,6 +185,66 @@ public:
 	static bool InBox(Box2D box, Vector2 p){
 		return p.X() >= box.Left() && p.X() <= box.Right() && p.Y() >= box.Bottom() && p.Y() <= box.Top();
 	}
+};
+//-----------------------------------------------------------
+class Ray2D{
+public:
+
+	enum RayDir
+	{
+		LEFT, RIGHT, UP, DOWN,
+	};
+
+	Ray2D(){}
+	Ray2D(Vector2 s, Vector2 d){
+		_start = s;
+		_dirP = d;
+		_line = Line2D(_start, _dirP);
+	}
+	~Ray2D(){}
+
+	Vector2 StartP(){
+		return _start;
+	}
+	Vector2 DirP(){
+		return _dirP;
+	}
+	Line2D Line(){
+		return _line;
+	}
+
+	static bool Intersection(Ray2D ray,Vector2 p1, Vector2 p2){
+		Line2D::PointPosition pos1 = Line2D::PointPos(ray.Line(),p1);
+		Line2D::PointPosition pos2 = Line2D::PointPos(ray.Line(), p2);
+
+		if (((pos1 == Line2D::PointPosition::LINE_LEFT || pos1 == Line2D::PointPosition::LINE_AT) && pos2 == Line2D::PointPosition::LINE_RIGHT)
+			|| ((pos2 == Line2D::PointPosition::LINE_LEFT || pos2 == Line2D::PointPosition::LINE_AT) && pos1 == Line2D::PointPosition::LINE_RIGHT)){
+
+			Line2D edge(p1, p2);
+			if (!Line2D::InterSection(ray.Line(), edge))
+				return false;
+			Vector2 interP = Line2D::InterSectionPos(ray.Line(), edge);
+			if (!OnRay(ray,interP))
+				return false;
+			return true;
+		}
+		return false;
+	}
+	static bool OnRay(Ray2D ray,Vector2 p){
+		if (Line2D::PointPos(ray.Line(),p) != Line2D::PointPosition::LINE_AT)
+			return false;
+		if (ray.StartP() == ray.DirP())
+			return false;
+		if (ray.Line().Vertical())
+			return (ray.DirP().Y() > ray.StartP().Y() ? (p.Y() >= ray.StartP().Y()) : (p.Y() <= ray.StartP().Y()));
+
+		return (ray.DirP().X() > ray.StartP().X() ? (p.X() >= ray.StartP().X()) : (p.X() <= ray.StartP().X()));
+	}
+
+private:
+	Vector2 _start;
+	Vector2 _dirP;
+	Line2D _line;
 };
 //-----------------------------------------------------------
 class Vector3{
@@ -189,13 +290,13 @@ public:
 	}
 };
 //-----------------------------------------------------------
-class Line{
+class Line3D{
 private:
 	Vector3 _p1;
 	Vector3 _p2;
 public:
-	Line(){}
-	Line(Vector3 p1, Vector3 p2){
+	Line3D(){}
+	Line3D(Vector3 p1, Vector3 p2){
 		_p1 = p1;
 		_p2 = p2;
 	}
@@ -204,10 +305,10 @@ public:
 	Vector3 P2(){ return _p2; }
 	Vector3 Dir(){ return _p2-_p1; }
 
-	static Vector3 Sample(Line line, double t){
+	static Vector3 Sample(Line3D line, double t){
 		return line.P1() + line.Dir()*t;
 	}
-	static double Distance(Line line, Vector3 p){
+	static double Distance(Line3D line, Vector3 p){
 		if (line.P1() == line.P2())
 			return -1;
 
