@@ -80,6 +80,7 @@ namespace EP{
 		IplImage* figure = FillEdges(m_edges);
 		ImageHelper::SaveImage("figure.jpg", figure);
 		CoordinateFigure(figure, 6, 11);
+		ImageHelper::SaveImage("figure_dilation.jpg", figure);
 		List<List<Vector2>> edges = GenerateEdgeData(figure);
 
 		DrawEdges(m_src, edges, RGB(0, 0, 255));
