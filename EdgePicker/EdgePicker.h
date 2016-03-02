@@ -17,7 +17,9 @@ namespace EP{
 		static EdgePicker* m_instance;
 
 		const int CHANNEL_1_WHITE = 255;
-		const int COLOR_THRESHOLD = 60;
+		const int COLOR_THRESHOLD = 30;
+		int EROSION_CNT = 3;
+		int DILATION_CNT = 4;
 
 		void CoordinateFigure(IplImage* figure, int erosion, int dilation);
 		List<List<Vector2>> GenerateEdgeData(IplImage* figure);
@@ -45,9 +47,11 @@ namespace EP{
 		}
 
 		bool EnsureSrc();
-		void LoadSrcImage(char* filename);
-		void LoadGrabCutImage(char* filename);
+		bool LoadSrcImage(char* filename);
+		void SaveDstImage(char* filename);
+		bool LoadGrabCutImage(char* filename);
 		void LoadEdges(char* filename);
+		void LoadConfig(char* filename);
 
 		void PickEdge();
 

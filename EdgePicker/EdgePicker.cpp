@@ -7,11 +7,16 @@ namespace EP{
 			cout << "Error: src is null!" << endl;
 		return m_src != NULL;
 	}
-	void EdgePicker::LoadSrcImage(char* filename){
+	bool EdgePicker::LoadSrcImage(char* filename){
 		m_src = ImageHelper::LoadImage(filename);
+		return m_src != NULL;
 	}
-	void EdgePicker::LoadGrabCutImage(char* filename){
+	void EdgePicker::SaveDstImage(char* filename){
+		ImageHelper::SaveImage(filename, m_src);
+	}
+	bool EdgePicker::LoadGrabCutImage(char* filename){
 		m_grabcut = ImageHelper::LoadImage(filename);
+		return m_grabcut != NULL;
 	}
 	void EdgePicker::LoadEdges(char* filename){
 		char buffer[256];
@@ -48,63 +53,58 @@ namespace EP{
 			else
 				break;
 		}
-
-		//IplImage* test = cvCreateImage(CvSize(m_src->width, m_src->height), IPL_DEPTH_8U, 1);
-		//cvZero(test);
-		//cv::Mat testMat = cv::cvarrToMat(test);
-		//for (int i = 0; i < m_edges.Count(); i++){
-		////	if (edges[i].Count()>100)
-		//	for (int j = 1; j < m_edges[i].Count(); j++){
-		//		cvLine(test, cvPoint(m_edges[i][j - 1].X(), m_edges[i][j - 1].Y()), cvPoint(m_edges[i][j].X(), m_edges[i][j].Y()), CV_RGB(0, 0, 255));
-		//			//cvCircle(test, cvPoint(edges[i][j].X(), edges[i][j].Y()), 3, CV_RGB(0, 0, 255), 3);
-		//			//ImageHelper::SetElem(test, edges[i][j].X(), edges[i][j].Y(), 255);
-		//		}
-		//	cvLine(test, cvPoint(m_edges[i][m_edges[i].Count() - 1].X(), m_edges[i][m_edges[i].Count() - 1].Y()),
-		//		cvPoint(m_edges[i][0].X(), m_edges[i][0].Y()), CV_RGB(0, 0, 255));
-		//}
-		//IplImage* test2 = cvCreateImage(CvSize(m_src->width*0.5, m_src->height*0.5), IPL_DEPTH_8U, 1);
-		//cvResize(test, test2,CV_INTER_LINEAR);
-		//cvShowImage("test", test2);
-		//cvWaitKey();
-		//cvDestroyAllWindows();
-		//cvReleaseImage(&test);
-		//cvReleaseImage(&test2);
+	}
+	void EdgePicker::LoadConfig(char* filename){
+		char buffer[256];
+		const char* split = " ";
+		std::ifstream file(filename);
+		if (!file.is_open()){
+			cout << "File:" << filename << " not opened!" << endl;
+			return;
+		}
+		while (!file.eof()){
+			file.getline(buffer, 100);
+			char* token1, *token2, *nextToken;
+			token1 = strtok_s(buffer, split, &nextToken);
+			token2 = strtok_s(NULL, split, &nextToken);
+			if (token1 == NULL || token2==NULL)
+				continue;
+			if (!Tools::IsDigit(token2[0]))
+				continue;
+			if (strcmp(token1, "Erosion")==0)
+				EROSION_CNT = atoi((const char*)token2);
+			if (strcmp(token1, "Dilation")==0)
+				DILATION_CNT = atoi((const char*)token2);
+		}
 	}
 
 	void EdgePicker::PickEdge(){
-		IplImage* edgeImg = ImageHelper::CreateImage(m_src->width, m_src->height, IPL_DEPTH_8U, 1);
-		cvZero(edgeImg);
-		DrawEdges(edgeImg, m_edges, RGB(255, 255, 255));
-		ImageHelper::SaveImage("edge.jpg", edgeImg);
+		//---------------------------------------------------------------------------------------------------Method edgeBased
+		//IplImage* edgeImg = ImageHelper::CreateImage(m_src->width, m_src->height, IPL_DEPTH_8U, 1);
+		//cvZero(edgeImg);
+		//DrawEdges(edgeImg, m_edges, RGB(255, 255, 255));
+		//ImageHelper::SaveImage("edge.jpg", edgeImg);
 
-		IplImage* figure = FillEdges(m_edges);
-		ImageHelper::SaveImage("figure.jpg", figure);
-		CoordinateFigure(figure, 6, 11);
-		ImageHelper::SaveImage("figure_dilation.jpg", figure);
-		List<List<Vector2>> edges = GenerateEdgeData(figure);
+		//IplImage* figure = FillEdges(m_edges);
+		//ImageHelper::SaveImage("figure.jpg", figure);
+		//CoordinateFigure(figure, 6, 11);
+		//ImageHelper::SaveImage("figure_dilation.jpg", figure);
+		//List<List<Vector2>> edges = GenerateEdgeData(figure);
 
-		DrawEdges(m_src, edges, RGB(0, 0, 255));
-		ImageHelper::SaveImage("output.jpg", m_src);
-
-		ImageHelper::ReleaseImage(&figure);
-		ImageHelper::ReleaseImage(&edgeImg);
-
-		//---------------------------------------------------------------------------------------------------Method grabcut
-		//IplImage* figure1 = CoordinateFigure(m_grabcut, 6, 9);
-		//IplImage* figure2 = CoordinateFigure(m_grabcut, 8, 22);
-
-		//List<List<Vector2>> edges1 = GenerateEdgeData(figure1);
-		//List<List<Vector2>> edges2 = GenerateEdgeData(figure2);
-
-		//CoordinateEdge(edges1, edges2);
-
-		//DrawEdges(edges1, RGB(0, 0, 255));
-		//DrawEdges(edges2, RGB(0, 255, 0));
-		//DrawEdges(m_edges, RGB(255, 255, 255));
+		//DrawEdges(m_src, edges, RGB(0, 0, 255));
 		//ImageHelper::SaveImage("output.jpg", m_src);
 
-		//ImageHelper::ReleaseImage(&figure1);
-		//ImageHelper::ReleaseImage(&figure2);
+		//ImageHelper::ReleaseImage(&figure);
+		//ImageHelper::ReleaseImage(&edgeImg);
+		//---------------------------------------------------------------------------------------------------Method edgeBased
+
+		//---------------------------------------------------------------------------------------------------Method grabcut
+		IplImage* figure = m_grabcut;
+		CoordinateFigure(figure, EROSION_CNT, DILATION_CNT);
+
+		m_edges = GenerateEdgeData(figure);
+
+		DrawEdges(m_src, m_edges, RGB(255, 255, 255));
 		//---------------------------------------------------------------------------------------------------Method grabcut
 	}
 
