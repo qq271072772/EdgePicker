@@ -1,6 +1,6 @@
 #include "ImageHelper.h"
 
-namespace EP{
+namespace Utility{
 	IplImage* ImageHelper::LoadImage(char* filename){
 		return cvLoadImage(filename, CV_LOAD_IMAGE_UNCHANGED);
 	}
@@ -20,7 +20,7 @@ namespace EP{
 	IplImage* ImageHelper::CreateCopy(IplImage* src){
 		if (src == NULL)
 			return NULL;
-		IplImage* ret = CreateImage(src->width, src->height, src->height, src->nChannels);
+		IplImage* ret = CreateImage(src->width, src->height, src->depth, src->nChannels);
 		cvCopy(src, ret);
 		return ret;
 	}

@@ -3,9 +3,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include "Utility.h"
 
-using namespace Utility;
-
-namespace EP{
+namespace Utility{
 	struct RGB{
 		uchar r, g, b;
 		RGB(){}
