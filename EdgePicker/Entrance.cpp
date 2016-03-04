@@ -84,4 +84,6 @@ int main(int argCnt,char** args){
 	}
 
 	edgePicker->Destroy();
+
+	system("pause");
 }

@@ -22,7 +22,7 @@ namespace EP{
 		int DILATION_CNT = 4;
 
 		void CoordinateFigure(IplImage* figure, int erosion, int dilation);
-		List<List<Vector2>> GenerateEdgeData(IplImage* figure);
+
 		void CoordinateEdge(List<List<Vector2>>& edge1, List<List<Vector2>>& edge2);
 		Box2D GenerateEdgeBox(List<Vector2>& edge);
 		double BoxDiff(Box2D& box1, Box2D& box2);
@@ -56,6 +56,7 @@ namespace EP{
 		void PickEdge();
 
 		void DrawEdges(IplImage* src, List<List<Vector2>> &edges, RGB color);
+		List<List<Vector2>> GenerateEdgeData(IplImage* figure);
 		
 		void Destroy(){
 			delete this;
