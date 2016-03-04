@@ -1,3 +1,5 @@
+#ifndef EDGE_PICKER
+#define EDGE_PICKER
 #include <iostream>
 #include <fstream>
 #include "Utility.h"
@@ -64,3 +66,4 @@ namespace EP{
 		}
 	};
 }
+#endif

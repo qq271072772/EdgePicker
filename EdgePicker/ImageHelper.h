@@ -1,3 +1,5 @@
+#ifndef IMAGE_HELPER
+#define IMAGE_HELPER
 #include <opencv2/core/core.hpp> 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -30,3 +32,5 @@ namespace Utility{
 		static int RGB2GRAY(RGB rgb);
 	};
 }
+
+#endif
