@@ -445,4 +445,18 @@ namespace EP{
 				CvPoint(edges[i][0].X(), edges[i][0].Y()), CvScalar(color.b, color.g, color.r));
 		}
 	}
+	void EdgePicker::OutputEdges(char* filename, IplImage* src,List<List<Vector2>>& edges){
+		if (src == NULL)
+			return;
+		char buffer[256];
+		const char* split = "	";
+		std::ofstream file(filename, ios_base::trunc);
+		file << "width " << src->width << endl;
+		file << "height " << src->height << endl;
+		for (int i = 0; i < edges.Count(); i++){
+			file << endl;
+			for (int j = 0; j < edges[i].Count(); j++)
+				file << edges[i][j].X() << "	" << edges[i][j].Y() << endl;
+		}
+	}
 }

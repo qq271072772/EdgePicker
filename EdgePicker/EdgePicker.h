@@ -57,6 +57,7 @@ namespace EP{
 
 		void DrawEdges(IplImage* src, List<List<Vector2>> &edges, RGB color);
 		List<List<Vector2>> GenerateEdgeData(IplImage* figure);
+		void OutputEdges(char* filename, IplImage* src, List<List<Vector2>>& edges);
 		
 		void Destroy(){
 			delete this;
