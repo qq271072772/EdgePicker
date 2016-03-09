@@ -104,7 +104,7 @@ namespace EP{
 
 		m_edges = GenerateEdgeData(figure);
 
-		DrawEdges(m_src, m_edges, RGB(255, 255, 255));
+		DrawEdges(m_src, m_edges, U_RGB(255, 255, 255));
 		//---------------------------------------------------------------------------------------------------Method grabcut
 	}
 
@@ -272,14 +272,14 @@ namespace EP{
 				Vector2 p1 = edges1[e1][edgePairs[i].points1[j]];
 				Vector2 p2 = edges2[e2][edgePairs[i].points2[j]];
 				Line2D line(p1, p2);
-				RGB baseValue = ImageHelper::SampleElemRGB(m_src, p1.X(), p1.Y());
+				U_RGB baseValue = ImageHelper::SampleElemRGB(m_src, p1.X(), p1.Y());
 				if (line.Vertical()){
 					int inc = p1.Y() < p2.Y() ? 1 : -1;
 					int targetY = -1;
 					int maxbrightness = 0;
 					Vector2 baseP(p1.X(),p1.Y());
 					for (int k = p1.Y(); k != p2.Y(); k += inc){
-						RGB value = ImageHelper::SampleElemRGB(m_src, p1.X(), k);
+						U_RGB value = ImageHelper::SampleElemRGB(m_src, p1.X(), k);
 						if (ImageHelper::RGB2GRAY(value) > maxbrightness){
 							maxbrightness = ImageHelper::RGB2GRAY(value);
 							baseP = Vector2(p1.X(), k);
@@ -287,7 +287,7 @@ namespace EP{
 					}
 					//RGB baseValue = ImageHelper::SampleElemRGB(m_src, baseP.X(), baseP.Y());
 					for (int k = p1.Y(); k != p2.Y(); k+=inc){
-						RGB value = ImageHelper::SampleElemRGB(m_src, p1.X(), k);
+						U_RGB value = ImageHelper::SampleElemRGB(m_src, p1.X(), k);
 						if (ImageHelper::RGBDiff(value, baseValue)>COLOR_THRESHOLD){
 							targetY = k;
 							break;
@@ -299,7 +299,7 @@ namespace EP{
 				}
 				else{
 
-					RGB baseValue = ImageHelper::SampleElemRGB(m_src, p1.X(), p1.Y());
+					U_RGB baseValue = ImageHelper::SampleElemRGB(m_src, p1.X(), p1.Y());
 					int xDiff = Math::Abs(p1.X() - p2.X());	
 					int yDiff = Math::Abs(p1.Y() - p2.Y());
 					double step;
@@ -317,7 +317,7 @@ namespace EP{
 						int x = Math::Round(realX);
 						int y = Math::Round(Line2D::Sample(line, realX));
 
-						RGB value = ImageHelper::SampleElemRGB(m_src, x, y);
+						U_RGB value = ImageHelper::SampleElemRGB(m_src, x, y);
 						if (ImageHelper::RGB2GRAY(value) > maxbrightness){
 							maxbrightness = ImageHelper::RGB2GRAY(value);
 							baseP = Vector2(x, y);
@@ -345,7 +345,7 @@ namespace EP{
 						int x = Math::Round(realX);
 						int y = Math::Round(Line2D::Sample(line, realX));
 
-						RGB value = ImageHelper::SampleElemRGB(m_src, x, y);
+						U_RGB value = ImageHelper::SampleElemRGB(m_src, x, y);
 						if (ImageHelper::RGBDiff(value, baseValue) > COLOR_THRESHOLD){
 							break;
 						}
@@ -396,7 +396,7 @@ namespace EP{
 	IplImage* EdgePicker::FillEdges(List<List<Vector2>> &edges){
 		IplImage* figure = ImageHelper::CreateImage(m_src->width, m_src->height, IPL_DEPTH_8U, 1);
 		cvZero(figure);
-		DrawEdges(figure, edges, RGB(255, 255, 255));
+		DrawEdges(figure, edges, U_RGB(255, 255, 255));
 		for (int i = 0; i < edges.Count(); i++){
 			for (int j = 0; j < edges[i].Count(); j++){
 				bool complete = false;
@@ -436,7 +436,7 @@ namespace EP{
 		return interPointCnt % 2 != 0;
 	}
 
-	void EdgePicker::DrawEdges(IplImage* src,List<List<Vector2>> &edges, RGB color){
+	void EdgePicker::DrawEdges(IplImage* src, List<List<Vector2>> &edges, U_RGB color){
 		for (int i = 0; i < edges.Count(); i++){
 			for (int j = 1; j < edges[i].Count(); j++){
 				cvLine(src, CvPoint(edges[i][j - 1].X(), edges[i][j - 1].Y()), CvPoint(edges[i][j].X(), edges[i][j].Y()), CvScalar(color.b, color.g, color.r));

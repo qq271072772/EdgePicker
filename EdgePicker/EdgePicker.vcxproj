@@ -21,12 +21,14 @@
   <ItemGroup>
     <ClInclude Include="EdgePicker.h" />
     <ClInclude Include="ImageHelper.h" />
+    <ClInclude Include="IOHelper.h" />
     <ClInclude Include="Utility.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EdgePicker.cpp" />
     <ClCompile Include="Entrance.cpp" />
     <ClCompile Include="ImageHelper.cpp" />
+    <ClCompile Include="IOHelper.cpp" />
     <ClCompile Include="Utility.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -57,7 +57,7 @@ namespace EP{
 
 		void PickEdge();
 
-		void DrawEdges(IplImage* src, List<List<Vector2>> &edges, RGB color);
+		void DrawEdges(IplImage* src, List<List<Vector2>> &edges, U_RGB color);
 		List<List<Vector2>> GenerateEdgeData(IplImage* figure);
 		void OutputEdges(char* filename, IplImage* src, List<List<Vector2>>& edges);
 		

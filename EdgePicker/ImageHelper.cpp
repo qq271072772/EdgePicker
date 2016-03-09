@@ -34,10 +34,10 @@ namespace Utility{
 			return -1;
 		return CV_IMAGE_ELEM(src, uchar, y, x);
 	}
-	RGB ImageHelper::SampleElemRGB(IplImage* src, int x, int y){
+	U_RGB ImageHelper::SampleElemRGB(IplImage* src, int x, int y){
 		if (src == NULL || src->nChannels != 3)
-			return RGB();
-		RGB ret;
+			return U_RGB();
+		U_RGB ret;
 		ret.b = CV_IMAGE_ELEM(src, uchar, y, x*src->nChannels + 0);
 		ret.g = CV_IMAGE_ELEM(src, uchar, y, x*src->nChannels + 1);
 		ret.r = CV_IMAGE_ELEM(src, uchar, y, x*src->nChannels + 2);
@@ -48,7 +48,7 @@ namespace Utility{
 			return;
 		CV_IMAGE_ELEM(src, uchar, y, x) = value;
 	}
-	void ImageHelper::SetElemRGB(IplImage* src, int x, int y, RGB value){
+	void ImageHelper::SetElemRGB(IplImage* src, int x, int y, U_RGB value){
 		if (src == NULL || src->nChannels != 3)
 			return;
 		CV_IMAGE_ELEM(src, uchar, y, x*src->nChannels + 0) = value.b;
@@ -56,7 +56,7 @@ namespace Utility{
 		CV_IMAGE_ELEM(src, uchar, y, x*src->nChannels + 2) = value.r;
 	}
 
-	int ImageHelper::RGBDiff(RGB v1, RGB v2){
+	int ImageHelper::RGBDiff(U_RGB v1, U_RGB v2){
 		int diffR = Math::Abs(v1.r - v2.r);
 		int diffG = Math::Abs(v1.g - v2.g);
 		int diffB = Math::Abs(v1.b - v2.b); 
@@ -69,17 +69,17 @@ namespace Utility{
 		//	return diffG;
 		//return diffB;
 	}
-	int ImageHelper::RGB2Hash(RGB v){
+	int ImageHelper::RGB2Hash(U_RGB v){
 		return v.r * 256 * 256 + v.g * 256 + v.b;
 	}
-	RGB ImageHelper::Hash2RGB(int hash){
-		RGB ret;
+	U_RGB ImageHelper::Hash2RGB(int hash){
+		U_RGB ret;
 		ret.r = hash / 256 / 256;
 		ret.g = hash / 256 % 256;
 		ret.b = hash % 256;
 		return ret;
 	}
-	int ImageHelper::RGB2GRAY(RGB rgb){
+	int ImageHelper::RGB2GRAY(U_RGB rgb){
 		return (rgb.r + rgb.g + rgb.b) / 3;
 	}
 }

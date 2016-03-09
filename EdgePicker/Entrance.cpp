@@ -1,4 +1,5 @@
 #include "EdgePicker.h"
+#include "IOHelper.h"
 #include<windows.h>
 #include <strsafe.h>
 
@@ -6,31 +7,11 @@ using namespace std;
 using namespace EP;
 using namespace Utility;
 
-List<TCHAR*> GetAllFiles(TCHAR* dir){
-	TCHAR folder[MAX_PATH];
-	StringCchCopy(folder, MAX_PATH, dir);
-	StringCchCat(folder, MAX_PATH, TEXT("*"));
-	List<TCHAR*> files;
-	WIN32_FIND_DATA fd;
-	HANDLE hFind = ::FindFirstFile(folder, &fd);
-	if (hFind != INVALID_HANDLE_VALUE) {
-		do {
-			if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-				TCHAR* file = new TCHAR[MAX_PATH];
-				StringCchCopy(file, MAX_PATH, fd.cFileName);
-				files.Add(LPTSTR(file));
-			}
-		} while (::FindNextFile(hFind, &fd));
-		::FindClose(hFind);
-	}
-	return files;
-}
-
 int main(int argCnt,char** args){
 	EdgePicker* edgePicker = EdgePicker::Instance();
 
 	TCHAR buffer[MAX_PATH],sourcePath[MAX_PATH], grabcutPath[MAX_PATH], outputPath[MAX_PATH],configFile[MAX_PATH];
-	GetCurrentDirectory(MAX_PATH, buffer);
+	IOHelper::CurrentDirectory(buffer);
 	StringCchCopy(sourcePath, MAX_PATH, buffer);
 	StringCchCopy(grabcutPath, MAX_PATH, buffer);
 	StringCchCopy(outputPath, MAX_PATH, buffer);
@@ -41,7 +22,7 @@ int main(int argCnt,char** args){
 	StringCchCat(outputPath, MAX_PATH, TEXT("\\Output\\"));
 	StringCchCat(configFile, MAX_PATH, TEXT("\\Config.txt"));
 
-	List < TCHAR*> srcs = GetAllFiles(sourcePath);
+	List < TCHAR*> srcs = IOHelper::ListDirectoryFiles(sourcePath);
 
 	char config[MAX_PATH];
 	wcstombs_s(NULL, config, configFile, wcsnlen_s(configFile, MAX_PATH) + 1);
@@ -79,9 +60,7 @@ int main(int argCnt,char** args){
 		cout << filename << "(complete)" << endl;
 	}
 
-	for (int i = 0; i < srcs.Count(); i++){
-		delete[] srcs[i];
-	}
+	IOHelper::ReleaseDirectoryList(srcs);
 
 	edgePicker->Destroy();
 

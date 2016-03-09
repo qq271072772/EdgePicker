@@ -6,10 +6,10 @@
 #include "Utility.h"
 
 namespace Utility{
-	struct RGB{
+	struct U_RGB{
 		uchar r, g, b;
-		RGB(){}
-		RGB(uchar rv, uchar gv, uchar bv) :r(rv), g(gv), b(bv){}
+		U_RGB(){}
+		U_RGB(uchar rv, uchar gv, uchar bv) :r(rv), g(gv), b(bv){}
 	};
 	class ImageHelper{
 	private:
@@ -22,14 +22,14 @@ namespace Utility{
 		static void ReleaseImage(IplImage** img);
 
 		static uchar SampleElem(IplImage* src, int x, int y);
-		static RGB SampleElemRGB(IplImage* src, int x, int y);
+		static U_RGB SampleElemRGB(IplImage* src, int x, int y);
 		static void SetElem(IplImage* src, int x, int y, uchar value);
-		static void SetElemRGB(IplImage*src ,int x, int y, RGB value);
+		static void SetElemRGB(IplImage*src, int x, int y, U_RGB value);
 
-		static int RGBDiff(RGB v1, RGB v2);
-		static int RGB2Hash(RGB v);
-		static RGB Hash2RGB(int hash);
-		static int RGB2GRAY(RGB rgb);
+		static int RGBDiff(U_RGB v1, U_RGB v2);
+		static int RGB2Hash(U_RGB v);
+		static U_RGB Hash2RGB(int hash);
+		static int RGB2GRAY(U_RGB rgb);
 	};
 }
 
