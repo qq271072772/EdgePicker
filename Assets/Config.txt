@@ -1,0 +1,5 @@
+Extraction Top
+TrashPixels 100
+DownSampleCnt 2
+ErosionCnt 3
+DilationCnt 3

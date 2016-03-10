@@ -25,8 +25,10 @@ namespace Utility{
 		return ret;
 	}
 	void ImageHelper::ReleaseImage(IplImage** img){
-		if (img != NULL)
-			cvReleaseImage(img);
+		if (img == NULL || *img == NULL)
+			return;
+		cvReleaseImage(img);
+		*img = NULL;
 	}
 
 	uchar ImageHelper::SampleElem(IplImage* src, int x, int y){

@@ -44,6 +44,8 @@ namespace EP {
 		return grabcut;
 	}
 	void SegmentManager::DrawMaskPoint(Vector2 p, int radius, cv::GrabCutClasses type){
+		if (p.X() < 0 || p.Y() < 0 || p.X() >= m_mask.cols || p.Y() >= m_mask.rows)
+			return;
 		if (!m_maskInited){
 			ClearMask();
 			m_maskInited = true;

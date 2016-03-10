@@ -12,26 +12,27 @@ using namespace Utility;
 namespace EP{
 	class EdgePicker{
 	private:
-		IplImage* m_src;
-		IplImage* m_grabcut;
-
-		List<List<Vector2>> m_edges;
-
 		static EdgePicker* m_instance;
 
-		const int CHANNEL_1_WHITE = 255;
-		const int COLOR_THRESHOLD = 30;
+		char EXTRACTION[_MAX_PATH];
+		int TRASH_PIXELS = 0;
 		int EROSION_CNT = 3;
-		int DILATION_CNT = 4;
+		int DILATION_CNT = 3;
+		int GC_DOWN_SAMPLE_CNT = 2;
+
+		const int GC_ITE_CNT = 10;
+		const int GC_BRUSH_RADIUS = 3;
+
+		List<List<Vector2>> LoadEdges(char* filename);
+		void LoadConfig(char* filename);
+
+		void ShearImage(IplImage** src, List<List<Vector2>>&edges, int trashPixels);
+		IplImage* AutoGrabCut(IplImage* src, List<List<Vector2>>& edges,int downSampleCnt,int iteCnt,int brushRadius);
 
 		void CoordinateFigure(IplImage* figure, int erosion, int dilation);
-
-		void CoordinateEdge(List<List<Vector2>>& edge1, List<List<Vector2>>& edge2);
-		Box2D GenerateEdgeBox(List<Vector2>& edge);
-		double BoxDiff(Box2D& box1, Box2D& box2);
-
-		IplImage* FillEdges(List<List<Vector2>> &edges);
-		bool IsInterior(List<Vector2> edge, Vector2 p);
+		void DrawEdges(IplImage* src, List<List<Vector2>> &edges, U_RGB color);
+		List<List<Vector2>> GenerateEdgeData(IplImage* figure);
+		void OutputEdges(char* filename, IplImage* src, List<List<Vector2>>& edges);
 
 	public:
 
@@ -42,27 +43,14 @@ namespace EP{
 		}
 
 		EdgePicker(){
-			m_edges.Clear();
 		}
 		~EdgePicker(){
-			if (m_src != NULL)
-				ImageHelper::ReleaseImage(&m_src);
 		}
 
-		bool EnsureSrc();
-		bool LoadSrcImage(char* filename);
-		void SaveDstImage(char* filename);
-		bool LoadGrabCutImage(char* filename);
-		void LoadEdges(char* filename);
-		void LoadConfig(char* filename);
-
-		void PickEdge();
-
-		void DrawEdges(IplImage* src, List<List<Vector2>> &edges, U_RGB color);
-		List<List<Vector2>> GenerateEdgeData(IplImage* figure);
-		void OutputEdges(char* filename, IplImage* src, List<List<Vector2>>& edges);
+		void PickEdge(char* srcFile, char* edgeFile, char* configFile, char* outputFile);
 		
 		void Destroy(){
+			m_instance = NULL;
 			delete this;
 		}
 	};

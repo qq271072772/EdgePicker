@@ -49,6 +49,10 @@ public:
 
 	double X(){return _x;}
 	double Y(){return _y;}	
+	Vector2 Normalized(){
+		double len = sqrt(_x*_x + _y*_y);
+		return Vector2(_x / len, _y / len);
+	}
 	
 	const Vector2& operator=(Vector2 rhs){
 		_x = rhs.X();
@@ -58,8 +62,14 @@ public:
 	Vector2 operator+(Vector2 rhs){
 		return Vector2(_x + rhs.X(),_y + rhs.Y());
 	}
+	Vector2 operator-(Vector2 rhs){
+		return Vector2(_x - rhs.X(), _y - rhs.Y());
+	}
 	Vector2 operator/(double rhs){
 		return Vector2(_x / rhs,_y / rhs);
+	}
+	Vector2 operator*(double rhs){
+		return Vector2(_x * rhs, _y * rhs);
 	}
 	bool operator==(Vector2 rhs){
 		return Math::Equal(_x, rhs.X()) && Math::Equal(_y, rhs.Y());
