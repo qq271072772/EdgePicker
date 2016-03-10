@@ -30,6 +30,9 @@ namespace Utility{
 		static int RGB2Hash(U_RGB v);
 		static U_RGB Hash2RGB(int hash);
 		static int RGB2GRAY(U_RGB rgb);
+
+		static IplImage* DownSample(IplImage* src, int cnt = 1);
+		static IplImage* UpSample(IplImage* src, int cnt = 1);
 	};
 }
 

@@ -4,6 +4,7 @@
 #include <fstream>
 #include "Utility.h"
 #include "ImageHelper.h"
+#include "SegmentManager.h"
 
 using namespace std;
 using namespace Utility;

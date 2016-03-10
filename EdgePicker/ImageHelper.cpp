@@ -82,4 +82,31 @@ namespace Utility{
 	int ImageHelper::RGB2GRAY(U_RGB rgb){
 		return (rgb.r + rgb.g + rgb.b) / 3;
 	}
+
+	IplImage*  ImageHelper::DownSample(IplImage* src, int cnt){
+		if (src == NULL)
+			return NULL;
+		IplImage* cur = cvCreateImage(cvGetSize(src), src->depth, src->nChannels);
+		cvCopy(src, cur);
+		for (int i = 0; i < cnt; i++){
+			IplImage* down = cvCreateImage(CvSize(cur->width / 2, cur->height / 2), cur->depth, cur->nChannels);
+			cvPyrDown(cur, down);
+			cvReleaseImage(&cur);
+			cur = down;
+		}
+		return cur;
+	}
+	IplImage*  ImageHelper::UpSample(IplImage* src, int cnt){
+		if (src == NULL)
+			return NULL;
+		IplImage* cur = cvCreateImage(cvGetSize(src), src->depth, src->nChannels);
+		cvCopy(src, cur);
+		for (int i = 0; i < cnt; i++){
+			IplImage* up = cvCreateImage(CvSize(cur->width * 2, cur->height * 2), cur->depth, cur->nChannels);
+			cvPyrUp(cur, up);
+			cvReleaseImage(&cur);
+			cur = up;
+		}
+		return cur;
+	}
 }
