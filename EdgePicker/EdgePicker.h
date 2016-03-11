@@ -47,7 +47,7 @@ namespace EP{
 		~EdgePicker(){
 		}
 
-		void PickEdge(char* srcFile, char* edgeFile, char* configFile, char* outputFile);
+		void PickEdge(char* srcFile, char* edgeFile, char* configFile, char* outputFile, char* outlineFile);
 		
 		void Destroy(){
 			m_instance = NULL;

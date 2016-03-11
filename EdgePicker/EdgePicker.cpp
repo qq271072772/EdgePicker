@@ -3,7 +3,7 @@
 namespace EP{
 	//Public
 
-	void EdgePicker::PickEdge(char* srcFile, char* edgeFile, char* configFile, char* outputFile){
+	void EdgePicker::PickEdge(char* srcFile, char* edgeFile, char* configFile, char* outputFile, char* outlineFile){
 		IplImage* src= ImageHelper::LoadImage(srcFile);
 		if (src == NULL){
 			cout << "Source file load failed!" << endl;
@@ -21,7 +21,6 @@ namespace EP{
 		}
 
 		ShearImage(&src, edges, TRASH_PIXELS);
-		ImageHelper::SaveImage("sheared.jpg", src);
 
 		IplImage* figure = AutoGrabCut(src, edges, GC_DOWN_SAMPLE_CNT, GC_ITE_CNT, GC_BRUSH_RADIUS);
 		CoordinateFigure(figure, EROSION_CNT, DILATION_CNT);
@@ -29,7 +28,8 @@ namespace EP{
 
 		List<List<Vector2>> bottomEdges= GenerateEdgeData(figure);
 		DrawEdges(src, bottomEdges, U_RGB(255, 255, 255));
-		ImageHelper::SaveImage("outline.jpg", src);
+		if (outlineFile != NULL)
+			ImageHelper::SaveImage(outlineFile, src);
 
 		OutputEdges(outputFile, src, bottomEdges);
 
@@ -132,7 +132,6 @@ namespace EP{
 		segMgr->SetSrcImage(src);
 		segMgr->ClearMask();
 
-		//TODO:Draw Mask
 		//Find Polygon with max points
 		int maxPointsCnt = 0;
 		int index = -1;
