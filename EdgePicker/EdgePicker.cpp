@@ -22,9 +22,8 @@ namespace EP{
 
 		ShearImage(&src, edges, TRASH_PIXELS);
 
-		IplImage* edgeImg = ImageHelper::CreateImage(src->width, src->height, src->depth, src->nChannels);
-		cvCanny(src, edgeImg, 50, 150);
-		ImageHelper::SaveImage("src.jpg", src);
+		IplImage* edgeImg = ImageHelper::CreateImage(src->width, src->height, IPL_DEPTH_8U, 1);
+		DrawEdges(edgeImg, edges, U_RGB(255, 255, 255));
 		ImageHelper::SaveImage("edge.jpg", edgeImg);
 		return;
 		IplImage* figure = AutoGrabCut(src, edges, GC_DOWN_SAMPLE_CNT, GC_ITE_CNT, GC_BRUSH_RADIUS);
