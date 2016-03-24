@@ -22,6 +22,11 @@ namespace EP{
 
 		ShearImage(&src, edges, TRASH_PIXELS);
 
+		IplImage* edgeImg = ImageHelper::CreateImage(src->width, src->height, src->depth, src->nChannels);
+		cvCanny(src, edgeImg, 50, 150);
+		ImageHelper::SaveImage("src.jpg", src);
+		ImageHelper::SaveImage("edge.jpg", edgeImg);
+		return;
 		IplImage* figure = AutoGrabCut(src, edges, GC_DOWN_SAMPLE_CNT, GC_ITE_CNT, GC_BRUSH_RADIUS);
 		CoordinateFigure(figure, EROSION_CNT, DILATION_CNT);
 		ImageHelper::SaveImage("figure.jpg", figure);
