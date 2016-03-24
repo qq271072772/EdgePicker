@@ -30,8 +30,11 @@ namespace EP{
 		IplImage* AutoGrabCut(IplImage* src, List<List<Vector2>>& edges,int downSampleCnt,int iteCnt,int brushRadius);
 
 		void CoordinateFigure(IplImage* figure, int erosion, int dilation);
-		void DrawEdges(IplImage* src, List<List<Vector2>> &edges, U_RGB color);
 		List<List<Vector2>> GenerateEdgeData(IplImage* figure);
+		Box2D GenerateEdgeBox(List<Vector2>& edge);
+		double BoxDiff(Box2D& box1, Box2D& box2);
+		double BoxDiff(List < List<Vector2>> edges, List<List<Vector2>>refEdges,IplImage* src);
+		void DrawEdges(IplImage* src, List<List<Vector2>> &edges, U_RGB color);
 		void OutputEdges(char* filename, IplImage* src, List<List<Vector2>>& edges);
 
 	public:

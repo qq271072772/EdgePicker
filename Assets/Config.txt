@@ -1,5 +1,5 @@
 Extraction Top
 TrashPixels 0
 DownSampleCnt 2
-ErosionCnt 3
+ErosionCnt 10
 DilationCnt 3
