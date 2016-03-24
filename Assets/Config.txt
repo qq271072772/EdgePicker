@@ -1,5 +1,0 @@
-Extraction Top
-TrashPixels 0
-DownSampleCnt 2
-ErosionCnt 8
-EdgeColor 0 0 255
