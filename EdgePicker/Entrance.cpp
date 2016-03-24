@@ -21,7 +21,7 @@ int main(int argCnt,char** args){
 	}
 	EdgePicker* edgePicker = EdgePicker::Instance();
 	//edgePicker->PickEdge(srcFile, edgeFile, configFile, outputFile,outlineFile);
-	edgePicker->PickEdge("E:\\Project\\EdgePicker\\Assets\\Image3.jpg", "E:\\Project\\EdgePicker\\Assets\\Image3.txt", 
+	edgePicker->PickEdge("E:\\Project\\EdgePicker\\Assets\\Image1.jpg", "E:\\Project\\EdgePicker\\Assets\\Image1.txt", 
 		"E:\\Project\\EdgePicker\\Assets\\Config.txt", "output.txt", "outline.jpg");
 	edgePicker->Destroy();
 }

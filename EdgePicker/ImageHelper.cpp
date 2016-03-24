@@ -5,7 +5,8 @@ namespace Utility{
 		return cvLoadImage(filename, CV_LOAD_IMAGE_UNCHANGED);
 	}
 	void ImageHelper::SaveImage(char* filename, IplImage* img){
-		cvSaveImage(filename, img);
+		if (img != NULL)
+			cvSaveImage(filename, img);
 	}
 	IplImage* ImageHelper::Rgb2Gray(IplImage* src){
 		if (src == NULL)

@@ -1,16 +1,15 @@
 #include "EdgePicker.h"
 
 namespace EP{
-	//Public
-
+	//----------------------------Public
 	void EdgePicker::PickEdge(char* srcFile, char* edgeFile, char* configFile, char* outputFile, char* outlineFile){
-		IplImage* src= ImageHelper::LoadImage(srcFile);
+		IplImage* src = ImageHelper::LoadImage(srcFile);
 		if (src == NULL){
 			cout << "Source file load failed!" << endl;
 			return;
 		}
-		List<List<Vector2>> edges = LoadEdges(edgeFile);
-		if (edges.Count() == 0){
+		List<List<Vector2>> refEdges = LoadEdges(edgeFile);
+		if (refEdges.Count() == 0){
 			cout << "Edges file load failed!" << endl;
 			return;
 		}
@@ -20,38 +19,31 @@ namespace EP{
 			return;
 		}
 
-		ShearImage(&src, edges, TRASH_PIXELS);
-
-		//IplImage* edgeImg = ImageHelper::CreateImage(src->width, src->height, IPL_DEPTH_8U, 1);
-		//DrawEdges(edgeImg, edges, U_RGB(255, 255, 255));
-		//ImageHelper::SaveImage("edge.jpg", edgeImg);
-
-		IplImage* figure = AutoGrabCut(src, edges, GC_DOWN_SAMPLE_CNT, GC_ITE_CNT, GC_BRUSH_RADIUS);
-		CoordinateFigure(figure, EROSION_CNT, 0);
-		List<List<Vector2>> bottomEdges = GenerateEdgeData(figure);
-		double minBoxDiff = DBL_MAX;
-		while (true){
-			double boxDiff = BoxDiff(bottomEdges, edges, src);
-			if (boxDiff < minBoxDiff)
-				minBoxDiff = boxDiff;
-			else
-				break;
-			CoordinateFigure(figure, 0, 1);
-			bottomEdges = GenerateEdgeData(figure);
-		}
+		//Step 1
+		ShearImage(&src, refEdges, TRASH_PIXELS);
+		ImageHelper::SaveImage("shearedSrc.jpg", src);
+		//Step 2
+		IplImage* figure = CreateAutoGrabCut(src, refEdges, GC_DOWN_SAMPLE_CNT, GC_ITE_CNT, GC_BRUSH_RADIUS);
+		//Step 3
+		IplImage* refMask = CreateRefMask(src, figure, refEdges);
+		ImageHelper::SaveImage("refMask.jpg", refMask);
+		//Step 4
+		AutoConfigure(figure, refMask);
 		ImageHelper::SaveImage("figure.jpg", figure);
-
-		DrawEdges(src, bottomEdges, U_RGB(255, 255, 255));
+		//Step 5
+		List<List<Vector2>> figureEdges = GenerateEdgeData(figure);
+		DrawEdges(src, figureEdges, DRAE_EDGE_COLOR);
 		if (outlineFile != NULL)
 			ImageHelper::SaveImage(outlineFile, src);
-
-		OutputEdges(outputFile, src, bottomEdges);
-
+		//Step 6
+		OutputEdges(outputFile, src, figureEdges);
+		
 		ImageHelper::ReleaseImage(&src);
 		ImageHelper::ReleaseImage(&figure);
+		ImageHelper::ReleaseImage(&refMask);
 	}
 
-	//Private
+	//----------------------------Private
 	EdgePicker* EdgePicker::m_instance = NULL;
 	List<List<Vector2>> EdgePicker::LoadEdges(char* filename){
 		List<List<Vector2>> edges;
@@ -117,10 +109,20 @@ namespace EP{
 				EROSION_CNT = atoi((const char*)token2);
 			if (strcmp(token1, "DilationCnt") == 0)
 				DILATION_CNT = atoi((const char*)token2);
+			if (strcmp(token1, "EdgeColor")==0){
+				DRAE_EDGE_COLOR.r = atoi((const char*)token2);
+				token2 = strtok_s(NULL, split, &nextToken); 
+				if (token2!=NULL)
+					DRAE_EDGE_COLOR.g = atoi((const char*)token2);
+				token2 = strtok_s(NULL, split, &nextToken);
+				if (token2 != NULL)
+					DRAE_EDGE_COLOR.b = atoi((const char*)token2);
+			}
 		}
 	}
 	
-	void EdgePicker::ShearImage(IplImage** srcAddress, List<List<Vector2>>&edges, int trashPixels){
+	//Step Function
+	void EdgePicker::ShearImage(IplImage** srcAddress, List<List<Vector2>>&refEdges, int trashPixels){
 		IplImage* src = *srcAddress;
 		if (src->height <= 2 * trashPixels || src->width <= 2 * trashPixels || trashPixels==0)
 			return;
@@ -132,19 +134,19 @@ namespace EP{
 		ImageHelper::ReleaseImage(srcAddress);
 		*srcAddress = sheared;
 
-		for (int i = 0; i < edges.Count(); i++){
-			for (int j = 0; j < edges[i].Count(); j++){
-				Vector2 p = edges[i][j];
-				edges[i][j] = Vector2(p.X() - trashPixels, p.Y() - trashPixels);
-				if (edges[i][j].X() < 0 || edges[i][j].Y() < 0 || edges[i][j].X() >= sheared->width - 2 * trashPixels ||
-					edges[i][j].Y() >= sheared->height - 2 * trashPixels){
-					edges[i].RemoveAt(j);
+		for (int i = 0; i < refEdges.Count(); i++){
+			for (int j = 0; j < refEdges[i].Count(); j++){
+				Vector2 p = refEdges[i][j];
+				refEdges[i][j] = Vector2(p.X() - trashPixels, p.Y() - trashPixels);
+				if (refEdges[i][j].X() < 0 || refEdges[i][j].Y() < 0 || 
+					refEdges[i][j].X() >= sheared->width || refEdges[i][j].Y() >= sheared->height ){
+					refEdges[i].RemoveAt(j);
 					j--;
 				}
 			}
 		}
 	}
-	IplImage* EdgePicker::AutoGrabCut(IplImage* src, List<List<Vector2>>& edges, int downSampleCnt, int iteCnt, int brushRadius){
+	IplImage* EdgePicker::CreateAutoGrabCut(IplImage* src, List<List<Vector2>>& refEdges, int downSampleCnt, int iteCnt, int brushRadius){
 		if (src == NULL)
 			return NULL;
 		SegmentManager* segMgr = SegmentManager::Instance();
@@ -154,9 +156,9 @@ namespace EP{
 		//Find Polygon with max points
 		int maxPointsCnt = 0;
 		int index = -1;
-		for (int i = 0; i < edges.Count(); i++){
-			if (edges[i].Count()>maxPointsCnt){
-				maxPointsCnt = edges[i].Count();
+		for (int i = 0; i < refEdges.Count(); i++){
+			if (refEdges[i].Count()>maxPointsCnt){
+				maxPointsCnt = refEdges[i].Count();
 				index = i;
 			}
 		}
@@ -165,13 +167,13 @@ namespace EP{
 
 		//Find Center
 		Vector2 center(0, 0);
-		for (int i = 0; i < edges[index].Count(); i++)
-			center = center + edges[index][i];
-		center = center / edges[index].Count();
+		for (int i = 0; i < refEdges[index].Count(); i++)
+			center = center + refEdges[index][i];
+		center = center / refEdges[index].Count();
 
 		//Foreach point, find a proper place to draw mask
-		for (int i = 0; i < edges[index].Count(); i++){
-			Vector2 p = edges[index][i];
+		for (int i = 0; i < refEdges[index].Count(); i++){
+			Vector2 p = refEdges[index][i];
 			Vector2 dir = center - p;
 			p = p + dir.Normalized() * 2 * brushRadius;
 			p = Vector2((int)p.X(), (int)p.Y());
@@ -183,15 +185,62 @@ namespace EP{
 
 		return segMgr->GenerateGrabCut(iteCnt, downSampleCnt);
 	}
+	IplImage* EdgePicker::CreateRefMask(IplImage* src, IplImage* figure, List<List<Vector2>>& refEdges){
+		if (src == NULL || figure == NULL)
+			return NULL;
+		List<List<Vector2>> figureEdges = GenerateEdgeData(figure);
+		IplImage* mask = ImageHelper::CreateImage(src->width, src->height, src->depth, src->nChannels);
+		cvZero(mask);
+		
+		List<Box2D> refBoxes;
+		for (int i = 0; i < refEdges.Count(); i++)
+			refBoxes.Add(GenerateEdgeBox(refEdges[i]));
 
-	void EdgePicker::CoordinateFigure(IplImage* figure, int erosion, int dilation){
-		if (figure == NULL || figure->nChannels != 1)
-			return;
-		if (erosion > 0)
-			cvErode(figure, figure, NULL, erosion);
-		if (dilation > 0)
-			cvDilate(figure, figure, NULL, dilation);
+		List<List<Vector2>> pairEdges;
+		for (int i = 0; i < figureEdges.Count(); i++){
+			Box2D box = GenerateEdgeBox(figureEdges[i]);
+			double minDiff = DBL_MAX;
+			int index = -1;
+			for (int j = 0; j < refEdges.Count(); j++){
+				if (refEdges[j].Count() <= 0)
+					continue;
+				double boxDiff = BoxDiff(box, refBoxes[j]);
+				if (boxDiff < minDiff){
+					minDiff = boxDiff;
+					index = j;
+				}
+			}
+			if (index < 0){
+				cout << "Warning:Reference edge not found!" << endl;
+				return NULL;
+			}
+			pairEdges.Add(refEdges[index]);
+		}
+		DrawEdges(mask, pairEdges, U_RGB(255, 255, 255));
+		return mask;
 	}
+	void EdgePicker::AutoConfigure(IplImage* figure, IplImage* refMask){
+		if (figure == NULL || refMask == NULL)
+			return;
+		CoordinateFigure(figure, EROSION_CNT, 0);
+		IplImage* tmp_figure = ImageHelper::CreateCopy(figure);
+		List<List<Vector2>> figureEdges;
+		int maxMatchCnt = 0;
+		int dilationCnt = 0;
+		for (int i = 0; i < EROSION_CNT + 5; i++){
+			figureEdges = GenerateEdgeData(tmp_figure);
+			int matchCnt = PointMatchCnt(figureEdges, refMask);
+			if (matchCnt > maxMatchCnt){
+				maxMatchCnt = matchCnt;
+				dilationCnt = i + EXTRA_DILATION_CNT;
+			}
+			CoordinateFigure(tmp_figure, 0, 1);
+		}
+		CoordinateFigure(figure, 0, dilationCnt);
+
+		ImageHelper::ReleaseImage(&tmp_figure);
+	}
+
 	List<List<Vector2>> EdgePicker::GenerateEdgeData(IplImage* figure){
 		List<List<Vector2>> edges;
 		if (figure == NULL || figure->nChannels != 1)
@@ -216,6 +265,16 @@ namespace EP{
 
 		return edges;
 	}
+
+	//Internal Helper Function
+	void EdgePicker::CoordinateFigure(IplImage* figure, int erosion, int dilation){
+		if (figure == NULL || figure->nChannels != 1)
+			return;
+		if (erosion > 0)
+			cvErode(figure, figure, NULL, erosion);
+		if (dilation > 0)
+			cvDilate(figure, figure, NULL, dilation);
+	}
 	Box2D EdgePicker::GenerateEdgeBox(List<Vector2>& edge){
 		int maxX = 0, maxY = 0;
 		int minX = INT_MAX, minY = INT_MAX;
@@ -238,40 +297,19 @@ namespace EP{
 		double diffBot = box1.Bottom() - box2.Bottom();
 		return sqrt(diffLeft*diffLeft + diffRight*diffRight + diffTop*diffTop + diffBot*diffBot);
 	}
-	/*
-		@Function BoxDiff
-		@return box difference of two polygons
-		@param edges: result polygon
-		@param refEdges:reference polygon
-	*/
-	double EdgePicker::BoxDiff(List<List<Vector2>> edges, List<List<Vector2>>refEdges,IplImage* src){
-		double ret = 0;
-		List<Box2D> refBoxes;
-		for (int i = 0; i < refEdges.Count(); i++)
-			refBoxes.Add(GenerateEdgeBox(refEdges[i]));
-
-		List<List<Vector2>> pairEdges;
+	int EdgePicker::PointMatchCnt(List<List<Vector2>>& edges, IplImage* mask){
+		int ret = 0;
 		for (int i = 0; i < edges.Count(); i++){
-			Box2D box = GenerateEdgeBox(edges[i]);
-			double minDiff = DBL_MAX;
-			int index = -1;
-			for (int j = 0; j < refEdges.Count(); j++){
-				double boxDiff = BoxDiff(box, refBoxes[j]);
-				if (boxDiff < minDiff){
-					minDiff = boxDiff;
-					index = j;
-				}
+			for (int j = 0; j < edges[i].Count(); j++){
+				U_RGB value = ImageHelper::SampleElemRGB(mask, edges[i][j].X(), edges[i][j].Y());
+				if (value.r == 255 && value.g == 255 && value.b == 255)
+					ret++;
 			}
-			pairEdges.Add(refEdges[index]);
-			ret += BoxDiff(box, refBoxes[index]);
 		}
-		IplImage* test=ImageHelper::CreateImage(src->width, src->height, src->depth, src->nChannels);
-		cvZero(test);
-		DrawEdges(test, pairEdges, U_RGB(255, 255, 255));
-		ImageHelper::SaveImage("pairEdges.jpg", test);
-		ImageHelper::ReleaseImage(&test);
 		return ret;
 	}
+
+	//Tools
 	void EdgePicker::DrawEdges(IplImage* src, List<List<Vector2>> &edges, U_RGB color){
 		if (src == NULL)
 			return;
